@@ -27,21 +27,23 @@
           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <Button fx:id="buttonSuma" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="+" GridPane.columnIndex="3" />
-            <Button fx:id="buttonResta" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="-" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-            <Button fx:id="buttonMulti" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="*" GridPane.columnIndex="3" GridPane.rowIndex="2" />
-            <Button fx:id="buttonDivi" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="/" GridPane.columnIndex="3" GridPane.rowIndex="3" />
-            <Button fx:id="buttonIgual" onAction="#Operar" prefHeight="60.0" prefWidth="367.0" text="=" GridPane.columnIndex="3" GridPane.rowIndex="4" />
-            <Button fx:id="button" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-            <Button fx:id="button1" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="1" GridPane.rowIndex="3" />
-            <Button fx:id="button2" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="2" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-            <Button fx:id="button3" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="3" GridPane.columnIndex="2" GridPane.rowIndex="3" />
-            <Button fx:id="button4" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="4" GridPane.rowIndex="2" />
-            <Button fx:id="button5" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="5" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <Button fx:id="button6" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="6" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-            <Button fx:id="button7" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="7" GridPane.rowIndex="1" />
-            <Button fx:id="button8" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="8" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Button fx:id="button9" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="9" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <Button fx:id="buttonSuma" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="+" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+            <Button fx:id="buttonResta" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="-" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+            <Button fx:id="buttonMulti" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="*" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+            <Button fx:id="buttonDivi" onAction="#ObtenirBoto" prefHeight="60.0" prefWidth="100.0" text="/" GridPane.columnIndex="3" GridPane.rowIndex="4" />
+            <Button fx:id="buttonIgual" onAction="#Operar" prefHeight="60.0" prefWidth="367.0" text="=" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+            <Button fx:id="button" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+            <Button fx:id="button1" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="1" GridPane.rowIndex="3" />
+            <Button fx:id="button2" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="2" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <Button fx:id="button3" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="3" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+            <Button fx:id="button4" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="4" GridPane.rowIndex="2" />
+            <Button fx:id="button5" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="5" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Button fx:id="button6" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="6" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+            <Button fx:id="button7" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="7" GridPane.rowIndex="1" />
+            <Button fx:id="button8" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="8" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Button fx:id="button9" onAction="#ObtenirNum" prefHeight="60.0" prefWidth="100.0" text="9" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <Button fx:id="buttonEliminar" onAction="#eliminarUltim" prefHeight="60.0" prefWidth="100.0" text="Eliminar" GridPane.columnIndex="3" />
+            <Button fx:id="buttonClear" onAction="#netejarContainer" prefHeight="60.0" prefWidth="100.0" text="C" GridPane.rowIndex="4" />
          </children>
       </GridPane>
    </children>
