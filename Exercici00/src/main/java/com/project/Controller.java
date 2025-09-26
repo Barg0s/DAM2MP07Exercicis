@@ -20,22 +20,24 @@ public class Controller {
     private double primer = 0;
     private double segon = 0;
 
-    @FXML
-    private void ObtenirNum(ActionEvent e) {
-        Button boto = (Button) e.getSource();
-        String textBoto = boto.getText();
+
+@FXML
+private void ObtenirNum(ActionEvent e) { //https://stackoverflow.com/questions/56299102/how-to-know-which-button-is-bieng-clicked-in-javafx
+    Button boto = (Button) e.getSource();
+    String textBoto = boto.getText();
+
+    if ((textBoto.equals("+") || textBoto.equals("-") || 
+         textBoto.equals("*") || textBoto.equals("/")) 
+        && !container.getText().isEmpty()) {
+        
+        primer = Double.parseDouble(container.getText());
+        operador = textBoto;
+        container.clear();
+    } 
+    else {
         container.appendText(textBoto);
     }
-
-    @FXML
-    private void ObtenirBoto(ActionEvent event) {
-        if (!container.getText().isEmpty()) {
-            primer = Double.parseDouble(container.getText());
-            Button boto = (Button) event.getSource();
-            operador = boto.getText(); 
-            container.clear(); 
-        }
-    }
+}
 
     @FXML
     private void Operar(ActionEvent event) {
