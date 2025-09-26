@@ -1,17 +1,17 @@
 package com.project;
 
+import java.net.URL;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.event.EventHandler;
 import javafx.scene.layout.AnchorPane;
-
-import java.net.URL;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 public class ControllerListItem implements Initializable {
     @FXML
@@ -21,9 +21,16 @@ public class ControllerListItem implements Initializable {
     @FXML
     private ImageView img;
 
+
+    private String info;
+    public void setInfo(String info){
+        this.info = info;
+
+    }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         mostrarDetalls();
+
     }
 
     public void setTitle(String text) {
@@ -36,16 +43,15 @@ public class ControllerListItem implements Initializable {
     }
 
 private void mostrarDetalls() {
- /*   infoPane.setOnMouseClicked(e -> {
-        Controller c = (Controller) UtilsViews.getController("ViewPrincipal");
-        if (c != null) {
-            c.actualizarText(title.getText());
-            c.actualizarImatge(img.getImage());
-            System.out.println("Se actualizó info: " + title.getText());
-        } else {
-            System.out.println("Error: controlador principal nulo");
-        }
-    });
-} */
+
+        infoPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent e){
+                Controller c = (Controller) UtilsViews.getController("layout");
+                c.actualizarText(title.getText());
+                c.actualizarImatge(img.getImage());
+                c.obtenirText(info);
+            }
+        });
 
 }}
