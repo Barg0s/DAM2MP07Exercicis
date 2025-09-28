@@ -22,10 +22,13 @@ public class ControllerListItem implements Initializable {
     private ImageView img;
 
 
-    private String info;
+    private String info,color;
     public void setInfo(String info){
         this.info = info;
 
+    }
+    public void setColor(String color){
+        this.color = color;
     }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -51,6 +54,7 @@ private void mostrarDetalls() {
                 c.actualizarText(title.getText());
                 c.actualizarImatge(img.getImage());
                 c.obtenirText(info);
+                c.crearRectangle(color);
             }
         });
 
