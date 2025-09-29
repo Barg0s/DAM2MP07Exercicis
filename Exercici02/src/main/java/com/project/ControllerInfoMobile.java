@@ -8,22 +8,27 @@ import java.util.ResourceBundle;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import javafx.scene.image.Image ;
+
 
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 
-public class ControllerListMobile implements Initializable {
+public class ControllerInfoMobile implements Initializable {
 
 
     @FXML
     public VBox infoVbox;
-
+    public ImageView infoImatge;
+    public Label titol,info;
+    public String infoAdicional;
     @FXML
     public ImageView arrowBack;
 
@@ -99,34 +104,32 @@ public class ControllerListMobile implements Initializable {
                 String name = game.getString("name");   
                 String image = game.getString("image");
 
-                URL fxmlURL = getClass().getResource("/assets/views/infoView.fxml");
-                FXMLLoader loader = new FXMLLoader(fxmlURL);
-                Parent itemTemplate = loader.load();
-                    itemTemplate.setOnMouseClicked(event -> {
-        System.out.println("Item clicat: " + name);
-        // Aquí pots, per exemple, passar info a un altre controller o canviar de vista
-    });
-                ControllerListItem itemController = loader.getController();
-                itemController.setTitle(name);
-                itemController.setImatge("/assets/data/images/" + image);
+
+                titol.setText(name);
+                Image img = new Image("/assets/data/images/" + image);
+                infoImatge.setImage(img);
+
 
 
                 switch (jsonArxiu) {
                     case "/assets/data/games.json":
+                        infoAdicional = game.getString("plot");
 
                         break;
                    case "/assets/data/consoles.json":
-                        itemController.setColor(game.getString("color"));
+                        infoAdicional = game.getString("game");
 
                         break;
                    case "/assets/data/characters.json":
-                        itemController.setColor(game.getString("color"));
+                        infoAdicional = "Procesador: " + game.getString("procesador")
+                                    + "\nData: " + game.getString("date")
+                                    + "\ncolor: " + game.getString("color")
+                                    + "\nUnitats venudes: " + game.getInt("units_sold");
 
                         break;
                     default:
                         throw new AssertionError();
                 }
-                infoVbox.getChildren().add(itemTemplate);
 
                 
             }
@@ -134,4 +137,5 @@ public class ControllerListMobile implements Initializable {
         System.out.println("error al carregar el fitxer");
         e.printStackTrace();        }
     }
+
 }

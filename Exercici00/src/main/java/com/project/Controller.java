@@ -2,12 +2,10 @@ package com.project;
 
 import java.util.Locale;
 
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import java.util.Locale;
 
 public class Controller {
 
@@ -118,13 +116,21 @@ private void ObtenirNum(ActionEvent e) { //https://stackoverflow.com/questions/5
         
     }
 
-    @FXML
-    private void eliminarUltim(ActionEvent e){
-        if (!container.getText().isEmpty()){ //https://stackoverflow.com/questions/27950596/how-to-build-a-delete-button-to-remove-a-character-from-the-textfield-every-time
-            container.setText( container.getText().substring(0, container.getText().length()-1));
+@FXML
+private void eliminarUltim(ActionEvent e){
+    String TextActual = container.getText();
 
-            bloquejarBotons(false);
+    if (!TextActual.isEmpty()) {
+        TextActual = TextActual.substring(0, TextActual.length() - 1);
+        
+        container.setText(TextActual);
+        
+        bloquejarBotons(false);
+        
+        if (TextActual.length() == 0) {
+            container.setText("0");
         }
-
     }
+}
+
 }

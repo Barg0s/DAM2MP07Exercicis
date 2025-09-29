@@ -1,8 +1,6 @@
 package com.project;
 
-import java.io.IOException;
 import java.net.URL;
-import java.util.Objects;
 import java.util.ResourceBundle;
 
 import javafx.event.EventHandler;
@@ -13,11 +11,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Node;
 import javafx.scene.layout.VBox;
-import javafx.event.ActionEvent;
 
 public class ControllerMobile implements Initializable {
 
@@ -78,7 +72,15 @@ public void crearLabels() {
             public void handle(MouseEvent e) {
                 try {
                    
+                    ControllerListMobile clm = (ControllerListMobile) UtilsViews.getController("layoutListMobile");
+                    String fitxer = "/assets/data/" + l.getText() + ".json";
+                    clm.setJsonFile(fitxer);
+
+                    
+                    UtilsViews.setView("layoutListMobile");
                     System.out.println(l.getText());
+                    
+                
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
