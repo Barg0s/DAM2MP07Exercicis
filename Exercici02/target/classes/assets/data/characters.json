@@ -57,13 +57,13 @@
         "name": "Fox",
         "image": "character_fox.png",
         "color": "brown",
-        "game": "Pokémon"
+        "game": "Star Fox"
     },
     {
         "name": "Pikachu",
         "image": "character_pikachu.png",
-        "color": "brown",
-        "game": "Metroid"
+        "color": "yellow",
+        "game": "Pokémon"
     },
     {
         "name": "Kirby",

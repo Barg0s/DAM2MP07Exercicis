@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane fx:id="container" prefHeight="650.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.ControllerMobile">
+
+    <!-- Título principal -->
+    <Label alignment="CENTER" layoutX="0.0" layoutY="0.0" prefHeight="50.0" prefWidth="400.0" style="-fx-background-color: #6fb2f7; -fx-font-size: 20px;" text="NINTENDO DB" />
+
+    <!-- Panel lateral con scroll -->
+    <ScrollPane fitToWidth="true" layoutX="-1.0" layoutY="50.0" pannable="true" prefHeight="601.0" prefWidth="400.0">
+        <content>
+            <VBox fx:id="infoVbox" prefHeight="600.0" prefWidth="400.0" spacing="10.0" style="-fx-padding: 10; -fx-border-color: #5ca2b9;" />
+        </content>
+    </ScrollPane>
+
+</AnchorPane>

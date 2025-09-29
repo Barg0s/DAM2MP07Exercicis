@@ -1,5 +1,10 @@
 com\project\Main.class
+com\project\ControllerMobile$1.class
 com\project\ControllerListItem$1.class
 com\project\ControllerListItem.class
+com\project\ControllerMobile.class
+com\project\Main$1.class
+com\project\ControllerListMobile.class
 com\project\Controller.class
+com\project\ControllerListItemMobile.class
 com\project\UtilsViews.class
