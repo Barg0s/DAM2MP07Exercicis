@@ -33,6 +33,7 @@ public class ControllerListItem implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         mostrarDetalls();
+        cambiarcolor();
 
     }
 
@@ -60,7 +61,20 @@ private void mostrarDetalls() {
 
 }
 
-private void borrarRecangle(){
+private void cambiarcolor(){
+    infoPane.setOnMouseEntered(new EventHandler<MouseEvent>(){
 
-    
-}}
+        @Override
+        public  void handle(MouseEvent e){
+            infoPane.setStyle("-fx-background-color:#dae7f3;");
+        }
+    });
+    infoPane.setOnMouseExited(new EventHandler<MouseEvent>(){
+        @Override
+        public  void handle(MouseEvent e){
+            infoPane.setStyle("-fx-background-color:transparent;");
+        }
+    });
+}
+
+}

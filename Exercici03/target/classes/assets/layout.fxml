@@ -9,7 +9,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="676.0" prefWidth="576.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.Controller">
+<AnchorPane prefHeight="676.0" prefWidth="576.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.Controller">
    <children>
       <Button fx:id="buttonCallComplete" layoutX="465.0" layoutY="185.0" mnemonicParsing="false" onAction="#callComplete" prefWidth="75.0" text="Complete" AnchorPane.rightAnchor="16.0" AnchorPane.topAnchor="48.0" />
       <VBox layoutX="26.0" layoutY="12.0" prefHeight="460.0" prefWidth="464.0">
@@ -18,7 +18,7 @@
                <content>
                   <VBox fx:id="chatVBox" prefHeight="465.0" prefWidth="462.0">
                      <children>
-                        <Text fx:id="textInfo" strokeType="OUTSIDE" strokeWidth="0.0" text="0" textAlignment="JUSTIFY" wrappingWidth="448.0">
+                        <Text fx:id="textInfo" strokeType="OUTSIDE" strokeWidth="0.0" textAlignment="JUSTIFY" wrappingWidth="448.0">
                            <font>
                               <Font size="16.0" />
                            </font>
@@ -31,10 +31,10 @@
       </VBox>
       <HBox layoutX="24.0" layoutY="493.0" prefHeight="41.0" prefWidth="464.0">
          <children>
-            <Button fx:id="buttonCallStream" mnemonicParsing="false" onAction="#callStream" prefWidth="75.0" text="Stream" />
+            <Button fx:id="buttonCallStream" mnemonicParsing="false" onAction="#callStream" prefWidth="75.0" text="ENVIAR" />
             <Button fx:id="buttonPicture" mnemonicParsing="false" onAction="#callPicture" prefWidth="75.0" text="Picture" />
             <Button fx:id="buttonBreak" mnemonicParsing="false" onAction="#callBreak" prefWidth="75.0" text="Break" />
-            <TextField fx:id="text" prefHeight="25.0" prefWidth="243.0" />
+            <TextField fx:id="text" prefHeight="25.0" prefWidth="243.0" promptText="introdueix la prompt" />
          </children>
       </HBox>
    </children>

@@ -72,6 +72,19 @@ public void crearLabels() {
         
          
         l.setId(t);
+            l.setOnMouseEntered(new EventHandler<MouseEvent>(){
+
+        @Override
+        public  void handle(MouseEvent e){
+            l.setStyle("-fx-background-color:#dae7f3;");
+        }
+    });
+    l.setOnMouseExited(new EventHandler<MouseEvent>(){
+        @Override
+        public  void handle(MouseEvent e){
+            l.setStyle("-fx-background-color:transparent;");
+        }
+    });
         infoVbox.getChildren().add(l);
 
         l.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -96,6 +109,5 @@ public void crearLabels() {
 
     }
 }
-
 
 }

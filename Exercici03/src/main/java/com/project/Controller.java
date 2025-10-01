@@ -1,35 +1,39 @@
 package com.project;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.text.Text;
-import javafx.event.ActionEvent;
-import javafx.application.Platform;
-import java.net.URL;
-import java.util.ResourceBundle;
-import javafx.fxml.Initializable;
+import java.io.BufferedReader;  // Correct JavaFX import
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.InputStream;
-import java.io.File;
 import java.nio.file.Files;
 import java.util.Base64;
+import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javafx.stage.FileChooser;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 
 public class Controller implements Initializable {
 
@@ -39,6 +43,7 @@ public class Controller implements Initializable {
 
     @FXML private Button buttonCallStream, buttonCallComplete, buttonBreak, buttonPicture;
     @FXML private Text textInfo;
+    @FXML private VBox chatVBox;
 
 
     @FXML
@@ -52,6 +57,7 @@ public class Controller implements Initializable {
     private Future<?> streamReadingTask;
     private volatile boolean isFirst = false;
 
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         setButtonsIdle();
@@ -62,19 +68,31 @@ public class Controller implements Initializable {
 
 
 
+
+
     
     @FXML
     private void callStream(ActionEvent event) {
+        Text textoPrueba = new Text();
         textInfo.setText("");
         setButtonsRunning();
         isCancelled.set(false);
+            String textUser = text.getText();
+            Label l = new Label(textUser);
+            chatVBox.getChildren().add(l);
+            chatVBox.getChildren().add(textoPrueba);
+            textoPrueba.setWrappingWidth(400);
+
         
         ensureModelLoaded(TEXT_MODEL).whenComplete((v, err) -> {
             if (err != null) {
-                Platform.runLater(() -> { textInfo.setText("Error loading model."); setButtonsIdle(); });
+                Platform.runLater(() -> { textoPrueba.setText("Error loading model."); setButtonsIdle(); });
                 return;
             }
-            executeTextRequest(TEXT_MODEL, "Why is the sky blue?", true);
+
+            executeTextRequest(TEXT_MODEL, textUser, true);
+            textInfo = textoPrueba;
+
         });
     }
 
@@ -92,6 +110,12 @@ public class Controller implements Initializable {
             executeTextRequest(TEXT_MODEL, "Tell me a haiku.", false);
         });
     }
+
+
+    //https://stackoverflow.com/questions/48832841/jruby-javafx-how-to-add-icon-to-button
+
+
+
 
     @FXML
     private void callPicture(ActionEvent event) {
@@ -113,6 +137,9 @@ public class Controller implements Initializable {
         }
 
         File file = fc.showOpenDialog(buttonPicture.getScene().getWindow());
+        ImageView imageView = new ImageView(file.toURI().toString());
+        int index = chatVBox.getChildren().size();
+        chatVBox.getChildren().add(index -1,imageView);
         if (file == null) {
             Platform.runLater(() -> { textInfo.setText("No file selected."); setButtonsIdle(); });
             return;
@@ -167,7 +194,6 @@ public class Controller implements Initializable {
             .build();
 
         if (stream) {
-            Platform.runLater(() -> textInfo.setText("Wait stream ... " + prompt));
             isFirst = true;
 
             streamRequest = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
@@ -359,7 +385,6 @@ public class Controller implements Initializable {
 
                 if (loaded) return CompletableFuture.completedFuture(null);
 
-                Platform.runLater(() -> textInfo.setText("Loading model ..."));
 
                 String preloadJson = new JSONObject()
                     .put("model", modelName)
