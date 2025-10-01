@@ -12,6 +12,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
 public class ControllerMobile implements Initializable {
 
@@ -64,6 +66,11 @@ public void crearLabels() {
     for (String t : titols) {
         Label l = new Label();
         l.setText(t);
+        l.setPrefWidth(290); 
+        l.setPrefHeight(40); 
+        l.setFont(Font.font("System", FontWeight.BOLD, 18));
+        
+         
         l.setId(t);
         infoVbox.getChildren().add(l);
 
@@ -77,7 +84,7 @@ public void crearLabels() {
                     clm.setJsonFile(fitxer);
 
                     
-                    UtilsViews.setView("layoutListMobile");
+                    UtilsViews.setViewAnimating("layoutListMobile");
                     System.out.println(l.getText());
                     
                 

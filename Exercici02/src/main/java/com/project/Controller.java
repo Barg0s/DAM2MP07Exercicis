@@ -30,7 +30,7 @@ public class Controller implements Initializable {
     @FXML
     private ImageView infoImatge;
     @FXML
-    private Label titol,info;
+    private Label titol,info,nintendoDBtitle;
     @FXML
     private AnchorPane container;
     @FXML
@@ -40,6 +40,7 @@ public class Controller implements Initializable {
     private JSONArray jsonData;
     private boolean creat;
     private Rectangle rectangle = null;
+    
 
 
     @Override
@@ -71,6 +72,8 @@ public class Controller implements Initializable {
             info.setWrapText(true);
     }
 public void crearRectangle(String color) {
+    detallesVbox.setAlignment(Pos.CENTER);
+
     if (choiceBox.getValue().equals("games")) {
         if (rectangle != null) {
             detallesVbox.getChildren().remove(rectangle);

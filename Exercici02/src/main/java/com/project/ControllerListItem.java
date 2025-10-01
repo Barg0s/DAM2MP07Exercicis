@@ -58,4 +58,9 @@ private void mostrarDetalls() {
             }
         });
 
+}
+
+private void borrarRecangle(){
+
+    
 }}

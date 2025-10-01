@@ -10,9 +10,9 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     final int WINDOW_WIDTH = 800;
-    final int WINDOW_HEIGHT = 650;
+    final int WINDOW_HEIGHT = 700;
     final int MIN_WIDTH = 400;
-    final int MIN_HEIGHT = 650;
+    final int MIN_HEIGHT = 700;
  
     public static void main(String[] args) {
         launch(args);
@@ -25,6 +25,7 @@ public class Main extends Application {
         UtilsViews.addView(getClass(), "layout", "/assets/views/layout.fxml");
         UtilsViews.addView(getClass(), "layoutMobile", "/assets/views/layout_mobile.fxml");
         UtilsViews.addView(getClass(), "layoutListMobile", "/assets/views/layout_list.fxml");
+        UtilsViews.addView(getClass(), "layoutDataMobile", "/assets/views/layout_info.fxml");
         Scene scene = new Scene(UtilsViews.parentContainer);
 
         // Listen to window width changes
@@ -60,7 +61,7 @@ public class Main extends Application {
     }
 
     private void _setLayout(int width) {
-        if (width < 500) {
+        if (width < 415) {
             UtilsViews.setView("layoutMobile");
         } else {
             UtilsViews.setView("layout");

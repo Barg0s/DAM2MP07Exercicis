@@ -20,14 +20,19 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
-
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.geometry.Pos;
 public class ControllerInfoMobile implements Initializable {
+    private boolean creat;
+    private Rectangle rectangle = null;
 
 
     @FXML
     public VBox infoVbox;
     public ImageView infoImatge;
-    public Label titol,info;
+    @FXML
+    public Label titol,info,nom;
     public String infoAdicional;
     @FXML
     public ImageView arrowBack;
@@ -43,26 +48,55 @@ public class ControllerInfoMobile implements Initializable {
         carregarJSON();
         System.out.println(jsonArxiu);
     }
+    public void actualizarText(String title){
+        titol.setText(title);
+    }
+    public void obtenirText(String infoExtra){
+            info.setText(infoExtra);
+            info.setWrapText(true);
+    }
+
+    public void actualizarTitol(String infoExtra){
+            nom.setText(infoExtra);
+            nom.setWrapText(true);
+    }
 
 
+    public void actualizarImatge(Image img) {
+        infoImatge.setImage(img);
+    }
 
+public void crearRectangle(String color) {
+    infoVbox.setAlignment(Pos.CENTER);
+
+    if (color == null || color.isEmpty()) {
+        if (rectangle != null) {
+            infoVbox.getChildren().remove(rectangle);
+            rectangle = null;
+        }
+        return; // No crear nada
+    }
+
+    if (rectangle == null) {
+        rectangle = new Rectangle(20, 20); // tamaño ejemplo
+        infoVbox.getChildren().add(rectangle);
+    }
+    rectangle.setFill(Color.web(color));
+}
 
 
     @FXML
     public void Enrere(){
 
 
-        setJsonFile("");
 
         arrowBack.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
                 try {
                    
-                    infoVbox.getChildren().clear();
 
-                    setJsonFile("");                    
-                    UtilsViews.setView("layoutMobile");
+                    UtilsViews.setViewAnimating("layoutListMobile");
                     
                 
                 } catch (Exception ex) {
@@ -96,7 +130,6 @@ public class ControllerInfoMobile implements Initializable {
         }
     }
     private  void cargarItems(){
-        infoVbox.getChildren().clear();
 
         try {
             for (int i = 0; i < jsonData.length(); i++) {
@@ -116,11 +149,11 @@ public class ControllerInfoMobile implements Initializable {
                         infoAdicional = game.getString("plot");
 
                         break;
-                   case "/assets/data/consoles.json":
+                   case "/assets/data/characters.json":
                         infoAdicional = game.getString("game");
 
                         break;
-                   case "/assets/data/characters.json":
+                   case "/assets/data/consoles.json":
                         infoAdicional = "Procesador: " + game.getString("procesador")
                                     + "\nData: " + game.getString("date")
                                     + "\ncolor: " + game.getString("color")
@@ -133,6 +166,7 @@ public class ControllerInfoMobile implements Initializable {
 
                 
             }
+
         } catch (Exception e) {
         System.out.println("error al carregar el fitxer");
         e.printStackTrace();        }

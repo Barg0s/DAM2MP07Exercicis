@@ -1,48 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="container" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.Controller">
+<BorderPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.Controller">
 
-    <!-- Título principal -->
-    <Label alignment="CENTER" layoutX="0.0" layoutY="0.0" prefHeight="50.0" prefWidth="800.0" style="-fx-background-color: #6fb2f7; -fx-font-size: 20px;" text="NINTENDO DB" />
+    <!-- TOP: Title + ChoiceBox -->
+    <top>
+        <VBox>
+            <Label fx:id="nintendoDBtitle" alignment="CENTER" maxWidth="Infinity" prefHeight="50.0" style="-fx-background-color: #6fb2f7; -fx-font-size: 20px;" text="NINTENDO DB" />
 
-    <!-- ChoiceBox arriba -->
-    <ChoiceBox fx:id="choiceBox" layoutX="6.0" layoutY="63.0" prefHeight="26.0" prefWidth="212.0" />
+            <ChoiceBox fx:id="choiceBox" maxWidth="200.0" prefHeight="26.0" />
+        </VBox>
+    </top>
 
-    <!-- Panel lateral con scroll -->
-    <ScrollPane fitToWidth="true" layoutX="6.0" layoutY="95.0" pannable="true" prefHeight="500.0" prefWidth="212.0">
-        <content>
-            <VBox fx:id="infoVbox" prefHeight="498.0" prefWidth="210.0" spacing="10.0" style="-fx-padding: 10; -fx-border-color: #5ca2b9;" />
-        </content>
-    </ScrollPane>
+    <!-- LEFT: Info with scroll -->
+    <left>
+        <ScrollPane fitToWidth="true" pannable="true" prefWidth="220.0">
+            <content>
+                <VBox fx:id="infoVbox" prefHeight="525.0" prefWidth="205.0" spacing="10.0" style="-fx-padding: 10; -fx-border-color: #5ca2b9;" />
+            </content>
+        </ScrollPane>
+    </left>
 
-    <!-- Panel de detalles -->
-    <VBox fx:id="detallesVbox" layoutX="250.0" layoutY="95.0" prefHeight="500.0" prefWidth="520.0" spacing="10.0" style="-fx-padding: 10;">
-        <children>
-            <ImageView fx:id="infoImatge" fitHeight="200.0" fitWidth="220.0" preserveRatio="true" smooth="true">
-                <cursor>
-                    <Cursor fx:constant="CLOSED_HAND" />
-                </cursor>
-            <VBox.margin>
-               <Insets left="130.0" />
-            </VBox.margin>
-            </ImageView>
+    <!-- CENTER: Details -->
+    <center>
+        <VBox fx:id="detallesVbox" spacing="10.0" style="-fx-padding: 10;">
+            <children>
+                <ImageView fx:id="infoImatge" fitHeight="220.0" fitWidth="252.0" preserveRatio="true" smooth="true">
+                    <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                    </cursor>
+                </ImageView>
 
-            <Label fx:id="titol" alignment="CENTER" prefHeight="25.0" prefWidth="174.0" style="-fx-font-size: 16px; -fx-font-weight: bold;">
-            <VBox.margin>
-               <Insets left="130.0" />
-            </VBox.margin></Label>
+                <Label fx:id="titol" alignment="CENTER" style="-fx-font-size: 16px; -fx-font-weight: bold;">
+                    <font>
+                        <Font size="20.0" />
+                    </font>
+                </Label>
 
-            <Label fx:id="info" alignment="CENTER" prefHeight="200.0" prefWidth="527.0" style="-fx-padding: 5;" wrapText="true" />
-        </children>
-    </VBox>
+                <Label fx:id="info" alignment="CENTER" style="-fx-padding: 5;" wrapText="true">
+                    <font>
+                        <Font size="20.0" />
+                    </font>
+                </Label>
+            </children>
+        </VBox>
+    </center>
 
-</AnchorPane>
+</BorderPane>
