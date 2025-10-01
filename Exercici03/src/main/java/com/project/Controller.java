@@ -41,7 +41,7 @@ public class Controller implements Initializable {
     private static final String TEXT_MODEL   = "gemma3:1b";
     private static final String VISION_MODEL = "llava-phi3";
 
-    @FXML private Button buttonCallStream, buttonCallComplete, buttonBreak, buttonPicture;
+    @FXML private Button buttonCallStream, buttonBreak, buttonPicture;
     @FXML private Text textInfo;
     @FXML private VBox chatVBox;
 
@@ -74,7 +74,6 @@ public class Controller implements Initializable {
     @FXML
     private void callStream(ActionEvent event) {
         Text textoPrueba = new Text();
-        textInfo.setText("");
         setButtonsRunning();
         isCancelled.set(false);
             String textUser = text.getText();
@@ -137,14 +136,17 @@ public class Controller implements Initializable {
         }
 
         File file = fc.showOpenDialog(buttonPicture.getScene().getWindow());
-        ImageView imageView = new ImageView(file.toURI().toString());
-        int index = chatVBox.getChildren().size();
-        chatVBox.getChildren().add(index -1,imageView);
+       
         if (file == null) {
             Platform.runLater(() -> { textInfo.setText("No file selected."); setButtonsIdle(); });
             return;
         }
+        ImageView imageView = new ImageView(file.toURI().toString());
+        imageView.setFitHeight(100);
+        imageView.setFitWidth(100);
+        chatVBox.getChildren().add(imageView);
 
+        
 
         // Read file -> base64
         final String base64Image;
@@ -157,12 +159,18 @@ public class Controller implements Initializable {
             return;
         }
 
+        Text descripcion = new Text("analyzing picture");   
+        descripcion.setWrappingWidth(400);
+        chatVBox.getChildren().add(descripcion);
+
         ensureModelLoaded(VISION_MODEL).whenComplete((v, err) -> {
             if (err != null) {
                 Platform.runLater(() -> { textInfo.setText("Error loading model."); setButtonsIdle(); });
                 return;
             }
-            executeImageRequest(VISION_MODEL, "Describe what's in this picture", base64Image);
+
+
+            executeImageRequest(VISION_MODEL, "Describe what's in this picture", base64Image,descripcion);
         });
     }
 
@@ -206,7 +214,7 @@ public class Controller implements Initializable {
                     if (!isCancelled.get()) e.printStackTrace();
                     Platform.runLater(this::setButtonsIdle);
                     return null;
-                });
+                }); 
 
         } else {
             Platform.runLater(() -> textInfo.setText("Wait complete ..."));
@@ -226,8 +234,9 @@ public class Controller implements Initializable {
     }
 
     // Image + prompt (non-stream) using vision model
-    private void executeImageRequest(String model, String prompt, String base64Image) {
-        Platform.runLater(() -> textInfo.setText("Analyzing picture ..."));
+    private void executeImageRequest(String model, String prompt, String base64Image,Text text) {
+
+        Platform.runLater(() -> text.setText("Analyzing picture ..."));
 
         JSONObject body = new JSONObject()
             .put("model", model)
@@ -257,12 +266,13 @@ public class Controller implements Initializable {
                 }
 
                 final String toShow = msg;
-                Platform.runLater(() -> { textInfo.setText(toShow); setButtonsIdle(); });
+                Platform.runLater(() -> { text.setText(toShow); setButtonsIdle(); });
+
                 return resp;
             })
             .exceptionally(e -> {
                 if (!isCancelled.get()) e.printStackTrace();
-                Platform.runLater(() -> { textInfo.setText("Request failed."); setButtonsIdle(); });
+                Platform.runLater(() -> { text.setText("Request failed."); setButtonsIdle(); });
                 return null;
             });
     }
@@ -280,6 +290,7 @@ public class Controller implements Initializable {
                 if (chunk.isEmpty()) continue;
 
                 if (isFirst) {
+
                     Platform.runLater(() -> textInfo.setText(chunk));
                     isFirst = false;
                 } else {
@@ -345,15 +356,12 @@ public class Controller implements Initializable {
     }
 
     private void setButtonsRunning() {
-        buttonCallStream.setDisable(true);
-        buttonCallComplete.setDisable(true);
         buttonPicture.setDisable(true);
         buttonBreak.setDisable(false);
     }
 
     private void setButtonsIdle() {
         buttonCallStream.setDisable(false);
-        buttonCallComplete.setDisable(false);
         buttonPicture.setDisable(false);
         buttonBreak.setDisable(true);
         streamRequest = null;
