@@ -27,15 +27,7 @@ public class ControllerMobile implements Initializable {
     private AnchorPane container;
     @FXML
     public VBox infoVbox;
-    private String actual;
-
-    public String getActual() {
-        return this.actual;
-    }
-
-    public void setActual(String actual) {
-        this.actual = actual;
-    }
+  
 
 
 
@@ -44,15 +36,6 @@ public class ControllerMobile implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         crearLabels();
     }
-
-    public void actualizarText(String title){
-        titol.setText(title);
-    }
-    public void obtenirText(String infoExtra){
-            info.setText(infoExtra);
-            info.setWrapText(true);
-    }
-
 
 
 

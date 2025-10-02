@@ -18,7 +18,7 @@
             <VBox fx:id="infoVbox" prefHeight="600.0" prefWidth="400.0" spacing="10.0" style="-fx-padding: 10; -fx-border-color: #5ca2b9;" />
         </content>
     </ScrollPane>
-   <ImageView fx:id="arrowBack" fitHeight="50.0" fitWidth="75.0" pickOnBounds="true" preserveRatio="true">
+   <ImageView fx:id="arrowBack" fitHeight="50.0" fitWidth="28.0" layoutX="17.0" pickOnBounds="true" preserveRatio="true" smooth="false">
       <image>
          <Image url="@../data/images/arrow-back.png" />
       </image>

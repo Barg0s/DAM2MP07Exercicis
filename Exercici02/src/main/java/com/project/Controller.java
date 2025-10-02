@@ -38,7 +38,6 @@ public class Controller implements Initializable {
     @FXML
     private  ChoiceBox<String> choiceBox;
     private JSONArray jsonData;
-    private boolean creat;
     private Rectangle rectangle = null;
     
 
@@ -64,16 +63,17 @@ public class Controller implements Initializable {
         }
     }
 
-    public void actualizarText(String title){
+    public void actualizarTitol(String title){
         titol.setText(title);
     }
-    public void obtenirText(String infoExtra){
+    public void actualitzarInformacio(String infoExtra){
             info.setText(infoExtra);
             info.setWrapText(true);
     }
+
+
 public void crearRectangle(String color) {
     detallesVbox.setAlignment(Pos.CENTER);
-
     if (choiceBox.getValue().equals("games")) {
         if (rectangle != null) {
             detallesVbox.getChildren().remove(rectangle);
@@ -81,14 +81,10 @@ public void crearRectangle(String color) {
         }
         return;
     }
-
     if (rectangle == null) {
         rectangle = new Rectangle(25, 25);
         detallesVbox.getChildren().add(2, rectangle); 
-
     }
-
-
     rectangle.setFill(Color.valueOf(color));
 }
 
@@ -116,57 +112,70 @@ private void setDades(String nom) {
 
     }
 
+private String getInfo(JSONObject item, String choiceBoxValor) {
+    switch (choiceBoxValor) {
+        case "consoles":
+            return "Procesador: " + item.getString("procesador")
+            + "\nData: " + item.getString("date")
+            + "\ncolor: " + item.getString("color")
+            + "\nUnitats venudes: " + item.getInt("units_sold");
 
- private void cargarItems() {
-        try {
-
-            infoVbox.getChildren().clear();
-
-            for (int i = 0; i < jsonData.length(); i++) {
-                JSONObject game = jsonData.getJSONObject(i);
-
-                String name = game.getString("name"); 
-                String image = game.getString("image");
-                String infoAdicional = "";
-                URL fxmlURL = getClass().getResource("/assets/views/infoView.fxml");
-                FXMLLoader loader = new FXMLLoader(fxmlURL);
-                Parent itemTemplate = loader.load();
-
-                ControllerListItem itemController = loader.getController();
-                itemController.setTitle(name);
-                itemController.setImatge("/assets/data/images/" + image);
-
-                switch (choiceBox.getValue()) {
-                    case "games":
-                        infoAdicional = game.getString("plot");
-        
-                        break;
-                    case "characters":
-                        itemController.setColor(game.getString("color"));
-
-
-
-                        infoAdicional = game.getString("game");
-
-                        
-                        break;
-                    case "consoles":
-                                            itemController.setColor(game.getString("color"));
-
-                        infoAdicional = "Procesador: " + game.getString("procesador")
-                                    + "\nData: " + game.getString("date")
-                                    + "\ncolor: " + game.getString("color")
-                                    + "\nUnitats venudes: " + game.getInt("units_sold");
-                        break;
-                    default:
-                        break;
-                }
-                itemController.setInfo(infoAdicional);
-
-                infoVbox.getChildren().add(itemTemplate);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            case "games":
+            return item.getString("plot");
+        case "characters":
+            return item.getString("game");
+        default:
+            return "";
     }
+}
+
+private String getColor(JSONObject item, String tipus) {
+    switch (tipus) {
+        case "consoles":
+        case "characters":
+            return item.getString("color");
+
+        case "games":
+            return null;
+
+        default:
+            return "";
+    }
+}
+
+private void cargarItems() {
+    try {
+        infoVbox.getChildren().clear();
+
+        String tipus = choiceBox.getValue();
+
+        for (int i = 0; i < jsonData.length(); i++) {
+            JSONObject item = jsonData.getJSONObject(i);
+
+            String name = item.getString("name"); 
+            String image = item.getString("image");
+
+            URL fxmlURL = getClass().getResource("/assets/views/infoView.fxml");
+            FXMLLoader loader = new FXMLLoader(fxmlURL);
+            Parent itemTemplate = loader.load();
+
+            ControllerListItem itemController = loader.getController();
+            itemController.setTitle(name);
+            itemController.setImatge("/assets/data/images/" + image);
+
+            itemController.setInfo(getInfo(item, tipus));
+
+            String color = getColor(item, tipus);
+            if (color != null && !color.isEmpty()) {
+                itemController.setColor(color);
+            }
+
+            infoVbox.getChildren().add(itemTemplate);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+
 }

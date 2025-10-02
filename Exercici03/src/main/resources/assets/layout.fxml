@@ -1,40 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="676.0" prefWidth="576.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.Controller">
-   <children>
-      <VBox layoutX="26.0" layoutY="12.0" prefHeight="460.0" prefWidth="464.0">
-         <children>
-            <ScrollPane fx:id="scrollPane" hbarPolicy="NEVER" prefHeight="465.0" prefWidth="468.0">
-               <content>
-                  <VBox fx:id="chatVBox" prefHeight="465.0" prefWidth="462.0">
-                     <children>
-                        <Text fx:id="textInfo" strokeType="OUTSIDE" strokeWidth="0.0" textAlignment="JUSTIFY" wrappingWidth="448.0">
-                           <font>
-                              <Font size="16.0" />
-                           </font>
-                        </Text>
-                     </children>
-                  </VBox>
-               </content>
+<AnchorPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.project.Controller">
+
+    <!-- Chat Area -->
+    <VBox layoutX="20" layoutY="20" prefHeight="500" prefWidth="550" spacing="10" style="-fx-background-radius: 10px;" AnchorPane.leftAnchor="20" AnchorPane.topAnchor="20">
+        <children>
+            <ScrollPane fx:id="scrollPane" hbarPolicy="NEVER" prefHeight="465.0" prefWidth="550" style="-fx-border-radius: 10px; -fx-border-color: black; -fx-background-color: white; -fx-background-radius: 10px;">
+                <content>
+                    <VBox fx:id="chatVBox" prefWidth="540" spacing="5" style=": ;" />
+                </content>
             </ScrollPane>
-         </children>
-      </VBox>
-      <HBox layoutX="24.0" layoutY="493.0" prefHeight="41.0" prefWidth="464.0">
-         <children>
-            <Button fx:id="buttonPicture" mnemonicParsing="false" onAction="#callPicture" prefWidth="75.0" text="[ o ]" />
-            <Button fx:id="buttonBreak" mnemonicParsing="false" onAction="#callBreak" prefWidth="75.0" text="Break" />
-            <TextField fx:id="text" prefHeight="25.0" prefWidth="243.0" promptText="introdueix la prompt" />
-            <Button fx:id="buttonCallStream" mnemonicParsing="false" onAction="#callStream" prefHeight="26.0" prefWidth="65.0" text="ENVIAR" />
-         </children>
-      </HBox>
-   </children>
+      
+          <!-- Controls -->
+          <HBox prefHeight="40" spacing="10">
+              <children>
+                  <Button fx:id="buttonPicture" mnemonicParsing="false" onAction="#callPicture" prefWidth="80" />
+                  <Button fx:id="buttonBreak" mnemonicParsing="false" onAction="#callBreak" prefWidth="80" />
+                  <TextField fx:id="text" prefHeight="25.0" prefWidth="300.0" promptText="introdueix la teva prompt" />
+                  <Button fx:id="buttonCallStream" mnemonicParsing="false" onAction="#escollirModel" prefWidth="80" />
+                  <Button fx:id="netejarButton" mnemonicParsing="false" onAction="#clear" prefWidth="80" text="Clear" />
+              </children>
+          </HBox>
+        </children>
+      <padding>
+         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+      </padding>
+    </VBox>
+
+    <!-- Image Preview -->
+    <VBox layoutX="600" layoutY="20" prefWidth="160" spacing="10" AnchorPane.rightAnchor="20" AnchorPane.topAnchor="20">
+        <children>
+            <Label prefHeight="17.0" prefWidth="167.0" style="-fx-font-weight:bold;" text="IMATGE A ENVIAR" />
+            <ImageView fx:id="imgPreview" fitHeight="220.0" fitWidth="160.0" pickOnBounds="true" preserveRatio="true" />
+        </children>
+    </VBox>
+
 </AnchorPane>

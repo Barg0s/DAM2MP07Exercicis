@@ -8,9 +8,6 @@ import java.util.ResourceBundle;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.geometry.Pos;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,19 +18,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 public class ControllerListMobile implements Initializable {
 
 
-    private String info,color;
-    public void setInfo(String info){
-        this.info = info;
+    private String color;
 
-    }
+   
     public void setColor(String color){
         this.color = color;
     }
-        public String infoAdicional;
 
     @FXML
     public VBox infoVbox;
@@ -59,9 +52,6 @@ public class ControllerListMobile implements Initializable {
 
     @FXML
     public void Enrere(){
-
-
-
         arrowBack.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
@@ -71,7 +61,6 @@ public class ControllerListMobile implements Initializable {
 
                     setJsonFile(jsonArxiu);                    
                     UtilsViews.setViewAnimating("layoutMobile");
-                    infoAdicional = "";
                     
                 
                 } catch (Exception ex) {
@@ -101,7 +90,7 @@ public class ControllerListMobile implements Initializable {
 
             cargarItems();
         } catch (Exception e) {
-            // TODO: handle exception
+            System.out.println("error al carregar el json");
         }
     }
 private void cargarItems() {
@@ -112,17 +101,9 @@ private void cargarItems() {
             JSONObject item = jsonData.getJSONObject(i);
             String name = item.getString("name");   
             String image = item.getString("image");
-            // Cargar el template
             URL fxmlURL = getClass().getResource("/assets/views/infoView.fxml");
             FXMLLoader loader = new FXMLLoader(fxmlURL);
             Parent itemTemplate = loader.load();
-
-
-
-
-
-
-
             itemTemplate.setOnMouseClicked(new EventHandler<MouseEvent>(){
                 @Override
                 public void handle(MouseEvent e){
@@ -133,7 +114,7 @@ private void cargarItems() {
                         c.actualizarImatge(new Image("/assets/data/images/" + image));
                         String infoExtra = getInfo(item,jsonArxiu);
                         String color = getColor(item,jsonArxiu);
-                        c.obtenirText(infoExtra);
+                        c.actualitzarInformacio(infoExtra);
                         c.actualizarTitol(name);
 
                         c.crearRectangle(color);
@@ -145,7 +126,6 @@ private void cargarItems() {
                 }
             });
 
-            // Configurar controlador del item
             ControllerListItem itemController = loader.getController();
             String senseRuta = jsonArxiu.replace("/assets/data/", "");
             String titolClean = senseRuta.replace(".json", "");
@@ -164,14 +144,15 @@ private void cargarItems() {
         e.printStackTrace();
     }
 }
+
 private String getInfo(JSONObject item, String jsonArxiu) {
     switch (jsonArxiu) {
         case "/assets/data/consoles.json":
             return "Procesador: " + item.getString("procesador")
-                     + "\nFecha: " + item.getString("date")
-                     + "\nColor: " + item.getString("color")
-                     + "\nUnidades vendidas: " + item.getInt("units_sold");
-        case "/assets/data/games.json":
+            + "\nData: " + item.getString("date")
+            + "\ncolor: " + item.getString("color")
+            + "\nUnitats venudes: " + item.getInt("units_sold");
+            case "/assets/data/games.json":
             return item.getString("plot");
         case "/assets/data/characters.json":
             return item.getString("game");

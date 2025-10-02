@@ -16,7 +16,7 @@
         <VBox>
             <Label fx:id="nintendoDBtitle" alignment="CENTER" maxWidth="Infinity" prefHeight="50.0" style="-fx-background-color: #6fb2f7; -fx-font-size: 20px;" text="NINTENDO DB" />
 
-            <ChoiceBox fx:id="choiceBox" maxWidth="200.0" prefHeight="26.0" />
+            <ChoiceBox fx:id="choiceBox" maxWidth="220.0" prefHeight="26.0" prefWidth="220.0" />
         </VBox>
     </top>
 

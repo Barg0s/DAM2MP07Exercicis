@@ -24,8 +24,8 @@ public class Main extends Application {
         UtilsViews.parentContainer.setStyle("-fx-font: 14 arial;");
         UtilsViews.addView(getClass(), "layout", "/assets/views/layout.fxml");
         UtilsViews.addView(getClass(), "layoutMobile", "/assets/views/layout_mobile.fxml");
-        UtilsViews.addView(getClass(), "layoutListMobile", "/assets/views/layout_list.fxml");
-        UtilsViews.addView(getClass(), "layoutDataMobile", "/assets/views/layout_info.fxml");
+        UtilsViews.addView(getClass(), "layoutListMobile", "/assets/views/layout_list_mobile.fxml");
+        UtilsViews.addView(getClass(), "layoutDataMobile", "/assets/views/layout_info_mobile.fxml");
         Scene scene = new Scene(UtilsViews.parentContainer);
 
         // Listen to window width changes
@@ -61,7 +61,7 @@ public class Main extends Application {
     }
 
     private void _setLayout(int width) {
-        if (width < 415) {
+        if (width < 400) {
             UtilsViews.setView("layoutMobile");
         } else {
             UtilsViews.setView("layout");

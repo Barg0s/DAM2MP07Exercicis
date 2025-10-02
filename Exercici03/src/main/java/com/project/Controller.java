@@ -27,9 +27,11 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -41,10 +43,12 @@ public class Controller implements Initializable {
     private static final String TEXT_MODEL   = "gemma3:1b";
     private static final String VISION_MODEL = "llava-phi3";
 
-    @FXML private Button buttonCallStream, buttonBreak, buttonPicture;
+    @FXML private Button buttonCallStream, buttonBreak, buttonPicture,netejarButton;
     @FXML private Text textInfo;
     @FXML private VBox chatVBox;
+    @FXML private ImageView imgPreview;
 
+    private File imageFile;
 
     @FXML
     private TextField text;
@@ -56,19 +60,119 @@ public class Controller implements Initializable {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private Future<?> streamReadingTask;
     private volatile boolean isFirst = false;
+    private boolean hasImage = false;
+    private String base64Image;
+    
 
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+    chatVBox.getStylesheets().add(getClass().getResource("/assets/labelstyles.css").toExternalForm());
+    chatVBox.setSpacing(10);
+        Image img = new Image("assets/camera.png", 16, 16, true, true);
+        ImageView imgview = new ImageView(img);
+
+        buttonPicture.setGraphic(imgview); 
+
+        img = new Image("assets/break.png", 16, 16, true, true); 
+        imgview = new ImageView(img);
+        buttonBreak.setGraphic(imgview); 
+
+        img = new Image("assets/send.png", 16, 16, true, true); 
+        imgview = new ImageView(img);
+        buttonCallStream.setGraphic(imgview); 
+
         setButtonsIdle();
     }
 
-    // --- UI actions ---
 
 
 
 
 
+    private void mostrarImatge(VBox vbox){
+        ImageView imageView = new ImageView(imageFile.toURI().toString());
+        imageView.setFitHeight(100);
+        imageView.setFitWidth(100);
+        vbox.getChildren().add(imageView);
+        VBox.setMargin(imageView, new Insets(0, 0, 0, 30));
+
+
+    }
+    private void mostrarImatgeAmbPrompt(VBox vbox,Text prompt){
+        ImageView imageView = new ImageView(imageFile.toURI().toString());
+        imageView.setFitHeight(100);
+        imageView.setFitWidth(100);
+        vbox.getChildren().add(prompt);
+        vbox.getChildren().add(imageView);
+        VBox.setMargin(imageView, new Insets(0, 0, 0, 30));
+        VBox.setMargin(prompt, new Insets(0, 0, 0, 30));
+
+    }
+
+
+
+@FXML
+private void clear(){
+    chatVBox.getChildren().clear();
+    imgPreview.setImage(null);
+}
+@FXML
+private void escollirModel(ActionEvent e) {
+
+    VBox vboxUser = new VBox();
+    VBox vboxBot = new VBox();
+    Label userLabel = new Label("USUARI");
+    Label chatLabel = new Label("IETI xat");
+
+    // Añadir clases CSS
+    vboxUser.getStyleClass().add("vboxuser");
+    vboxBot.getStyleClass().add("vboxBot");
+    userLabel.getStyleClass().add("label");
+    chatLabel.getStyleClass().add("label");
+
+    String prompt = "";
+
+    if (hasImage) {
+        if (text.getText().isEmpty()) {
+            prompt = "Describe what's in this image";
+            vboxUser.getChildren().add(userLabel);
+            VBox.setMargin(chatLabel, new Insets(0, 0, 0, 30));
+            VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+
+
+            mostrarImatge(vboxUser);
+        } else {
+            prompt = text.getText();
+            vboxUser.getChildren().add(userLabel);
+
+            Text text =new Text(prompt);
+            VBox.setMargin(chatLabel, new Insets(0, 0, 0, 30));
+            VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+
+            mostrarImatgeAmbPrompt(vboxUser, text);
+        }
+
+        Text descripcion = new Text("Thinking...");
+        descripcion.getStyleClass().add("text");
+        descripcion.setWrappingWidth(400);
+        vboxBot.getChildren().add(chatLabel);
+        vboxBot.getChildren().add(descripcion);
+        chatVBox.getChildren().addAll(vboxUser, vboxBot);
+        text.clear();
+        imgPreview.setImage(null);
+        VBox.setMargin(descripcion, new Insets(0, 0, 0, 30));
+
+        executeImageRequest(VISION_MODEL, prompt, base64Image, descripcion);
+        hasImage = false;
+
+    } else {
+        if (text.getText().isEmpty()){
+            return;
+        }
+        callStream(e);
+    }
+}
 
     
     @FXML
@@ -77,10 +181,36 @@ public class Controller implements Initializable {
         setButtonsRunning();
         isCancelled.set(false);
             String textUser = text.getText();
+            Label userLabel = new Label("USUARI");
+            Label chatLabel = new Label("IETI xat");
             Label l = new Label(textUser);
-            chatVBox.getChildren().add(l);
-            chatVBox.getChildren().add(textoPrueba);
-            textoPrueba.setWrappingWidth(400);
+            VBox vboxUser = new VBox();
+            VBox vboxBot = new VBox();
+            vboxUser.getStylesheets().add("assets/labelstyles.css");
+            vboxBot.getStylesheets().add("assets/labelstyles.css");
+            userLabel.getStylesheets().add("assets/labelstyles.css");
+            l.getStylesheets().add("assets/labelstyles.css");
+
+            vboxUser.getStyleClass().add("vboxuser");
+            vboxBot.getStyleClass().add("vboxBot");
+            vboxBot.getChildren().add(chatLabel);
+            vboxBot.getChildren().add(textoPrueba);
+            userLabel.getStyleClass().add("label");
+            l.getStyleClass().add("label-message");
+
+            textoPrueba.getStyleClass().add("text-message");
+
+            vboxUser.getChildren().add(userLabel);
+            vboxUser.getChildren().add(l);
+            chatVBox.getChildren().add(vboxUser);
+            chatVBox.getChildren().add(vboxBot);
+
+        VBox.setMargin(chatLabel, new Insets(0, 0, 0, 30));
+        VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+        VBox.setMargin(l, new Insets(10, 0, 0, 30));
+        VBox.setMargin(textoPrueba, new Insets(10, 0, 0, 30));
+
+        textoPrueba.setWrappingWidth(400);
 
         
         ensureModelLoaded(TEXT_MODEL).whenComplete((v, err) -> {
@@ -91,24 +221,13 @@ public class Controller implements Initializable {
 
             executeTextRequest(TEXT_MODEL, textUser, true);
             textInfo = textoPrueba;
+            text.clear();
+
 
         });
     }
 
-    @FXML
-    private void callComplete(ActionEvent event) {
-        textInfo.setText("");
-        setButtonsRunning();
-        isCancelled.set(false);
 
-        ensureModelLoaded(TEXT_MODEL).whenComplete((v, err) -> {
-            if (err != null) {
-                Platform.runLater(() -> { textInfo.setText("Error loading model."); setButtonsIdle(); });
-                return;
-            }
-            executeTextRequest(TEXT_MODEL, "Tell me a haiku.", false);
-        });
-    }
 
 
     //https://stackoverflow.com/questions/48832841/jruby-javafx-how-to-add-icon-to-button
@@ -118,7 +237,6 @@ public class Controller implements Initializable {
 
     @FXML
     private void callPicture(ActionEvent event) {
-        textInfo.setText("");
         setButtonsRunning();
         isCancelled.set(false);
 
@@ -141,37 +259,26 @@ public class Controller implements Initializable {
             Platform.runLater(() -> { textInfo.setText("No file selected."); setButtonsIdle(); });
             return;
         }
-        ImageView imageView = new ImageView(file.toURI().toString());
-        imageView.setFitHeight(100);
-        imageView.setFitWidth(100);
-        chatVBox.getChildren().add(imageView);
+        imageFile = file;
+
+        imgPreview.setImage(new Image(file.toURI().toString()));
+
 
         
 
         // Read file -> base64
-        final String base64Image;
         try {
             byte[] bytes = Files.readAllBytes(file.toPath());
             base64Image = Base64.getEncoder().encodeToString(bytes);
+            hasImage = true;
         } catch (Exception e) {
             e.printStackTrace();
             Platform.runLater(() -> { textInfo.setText("Error reading image."); setButtonsIdle(); });
             return;
         }
 
-        Text descripcion = new Text("analyzing picture");   
-        descripcion.setWrappingWidth(400);
-        chatVBox.getChildren().add(descripcion);
 
-        ensureModelLoaded(VISION_MODEL).whenComplete((v, err) -> {
-            if (err != null) {
-                Platform.runLater(() -> { textInfo.setText("Error loading model."); setButtonsIdle(); });
-                return;
-            }
-
-
-            executeImageRequest(VISION_MODEL, "Describe what's in this picture", base64Image,descripcion);
-        });
+        setButtonsIdle();
     }
 
     @FXML
@@ -180,7 +287,6 @@ public class Controller implements Initializable {
         cancelStreamRequest();
         cancelCompleteRequest();
         Platform.runLater(() -> {
-            textInfo.setText("Request cancelled.");
             setButtonsIdle();
         });
     }
@@ -236,7 +342,7 @@ public class Controller implements Initializable {
     // Image + prompt (non-stream) using vision model
     private void executeImageRequest(String model, String prompt, String base64Image,Text text) {
 
-        Platform.runLater(() -> text.setText("Analyzing picture ..."));
+        Platform.runLater(() -> text.setText("Thinking ..."));
 
         JSONObject body = new JSONObject()
             .put("model", model)

@@ -52,9 +52,9 @@ private void mostrarDetalls() {
             @Override
             public void handle(MouseEvent e){
                 Controller c = (Controller) UtilsViews.getController("layout");
-                c.actualizarText(title.getText());
+                c.actualizarTitol(title.getText());
                 c.actualizarImatge(img.getImage());
-                c.obtenirText(info);
+                c.actualitzarInformacio(info);
                 c.crearRectangle(color);
             }
         });

@@ -25,7 +25,6 @@ L'aplicació té dues vistes segons la mida de la finestra. I mostra la informac
 
 <Line endX="273.29290771484375" startX="-100.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" />
 
-
 <video width="275" height="480" controls>
   <source src="videos/viewsmallpreview.mov" type="video/mp4">
   El teu navegador no suporta la reproducció de vídeo.
