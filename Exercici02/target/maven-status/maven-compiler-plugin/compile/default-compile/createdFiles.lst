@@ -1,14 +1,17 @@
 com\project\Main.class
 com\project\ControllerMobile$1.class
 com\project\ControllerListItem$1.class
+com\project\ControllerListMobile$1.class
 com\project\ControllerInfoMobile.class
 com\project\ControllerListItem.class
 com\project\ControllerMobile.class
 com\project\Main$1.class
 com\project\ControllerInfoMobile$1.class
+com\project\ControllerListMobile.class
 com\project\Controller.class
 com\project\ControllerListItem$3.class
 com\project\ControllerMobile$3.class
 com\project\ControllerListItem$2.class
 com\project\UtilsViews.class
+com\project\ControllerListMobile$2.class
 com\project\ControllerMobile$2.class
