@@ -28,11 +28,13 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -137,96 +139,139 @@ private void escollirModel(ActionEvent e) {
         if (text.getText().isEmpty()) {
             prompt = "Describe what's in this image";
             vboxUser.getChildren().add(userLabel);
-            VBox.setMargin(chatLabel, new Insets(0, 0, 0, 30));
-            VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
 
+            Image imgBot = new Image("/assets/roboico.png");
+            ImageView imageView = new ImageView(imgBot);
+            imageView.setFitWidth(30);
+            imageView.setFitHeight(30);
+
+            HBox hbox = new HBox(10);
+            hbox.setAlignment(Pos.CENTER_LEFT);
+            hbox.getChildren().addAll(imageView, chatLabel);
+
+            vboxBot.getChildren().add(hbox);
+
+            VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+            VBox.setMargin(hbox, new Insets(0, 0, 0, 30));
 
             mostrarImatge(vboxUser);
+
         } else {
             prompt = text.getText();
             vboxUser.getChildren().add(userLabel);
 
-            Text text =new Text(prompt);
-            VBox.setMargin(chatLabel, new Insets(0, 0, 0, 30));
-            VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+            Image imgBot = new Image("/assets/roboico.png");
+            ImageView imageView = new ImageView(imgBot);
+            imageView.setFitWidth(30);
+            imageView.setFitHeight(30);
 
-            mostrarImatgeAmbPrompt(vboxUser, text);
+            HBox hbox = new HBox(10);
+            hbox.setAlignment(Pos.CENTER_LEFT);
+            hbox.getChildren().addAll(imageView, chatLabel);
+
+            vboxBot.getChildren().add(hbox);
+
+            VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+            VBox.setMargin(hbox, new Insets(0, 0, 0, 30));
+
+            Text txtPrompt = new Text(prompt);
+            mostrarImatgeAmbPrompt(vboxUser, txtPrompt);
         }
 
         Text descripcion = new Text("Thinking...");
         descripcion.getStyleClass().add("text");
         descripcion.setWrappingWidth(400);
-        vboxBot.getChildren().add(chatLabel);
+
         vboxBot.getChildren().add(descripcion);
+
         chatVBox.getChildren().addAll(vboxUser, vboxBot);
+
         text.clear();
         imgPreview.setImage(null);
+
         VBox.setMargin(descripcion, new Insets(0, 0, 0, 30));
 
         executeImageRequest(VISION_MODEL, prompt, base64Image, descripcion);
         hasImage = false;
 
     } else {
-        if (text.getText().isEmpty()){
+        if (text.getText().isEmpty()) {
             return;
         }
         callStream(e);
     }
 }
 
-    
-    @FXML
-    private void callStream(ActionEvent event) {
-        Text textoPrueba = new Text();
-        setButtonsRunning();
-        isCancelled.set(false);
-            String textUser = text.getText();
-            Label userLabel = new Label("USUARI");
-            Label chatLabel = new Label("IETI xat");
-            Label l = new Label(textUser);
-            VBox vboxUser = new VBox();
-            VBox vboxBot = new VBox();
-            vboxUser.getStylesheets().add("assets/labelstyles.css");
-            vboxBot.getStylesheets().add("assets/labelstyles.css");
-            userLabel.getStylesheets().add("assets/labelstyles.css");
-            l.getStylesheets().add("assets/labelstyles.css");
+@FXML
+private void callStream(ActionEvent event) {
+    Text textoPrueba = new Text();
+    setButtonsRunning();
+    isCancelled.set(false);
 
-            vboxUser.getStyleClass().add("vboxuser");
-            vboxBot.getStyleClass().add("vboxBot");
-            vboxBot.getChildren().add(chatLabel);
-            vboxBot.getChildren().add(textoPrueba);
-            userLabel.getStyleClass().add("label");
-            l.getStyleClass().add("label-message");
+    String textUser = text.getText();
 
-            textoPrueba.getStyleClass().add("text-message");
+    Label userLabel = new Label("USUARI");
+    Label chatLabel = new Label("IETI xat");
+    Label l = new Label(textUser);
 
-            vboxUser.getChildren().add(userLabel);
-            vboxUser.getChildren().add(l);
-            chatVBox.getChildren().add(vboxUser);
-            chatVBox.getChildren().add(vboxBot);
+    VBox vboxUser = new VBox();
+    VBox vboxBot = new VBox();
 
-        VBox.setMargin(chatLabel, new Insets(0, 0, 0, 30));
-        VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
-        VBox.setMargin(l, new Insets(10, 0, 0, 30));
-        VBox.setMargin(textoPrueba, new Insets(10, 0, 0, 30));
+    // CSS
+    vboxUser.getStylesheets().add("assets/labelstyles.css");
+    vboxBot.getStylesheets().add("assets/labelstyles.css");
+    userLabel.getStylesheets().add("assets/labelstyles.css");
+    l.getStylesheets().add("assets/labelstyles.css");
 
-        textoPrueba.setWrappingWidth(400);
+    vboxUser.getStyleClass().add("vboxuser");
+    vboxBot.getStyleClass().add("vboxBot");
 
-        
-        ensureModelLoaded(TEXT_MODEL).whenComplete((v, err) -> {
-            if (err != null) {
-                Platform.runLater(() -> { textoPrueba.setText("Error loading model."); setButtonsIdle(); });
-                return;
-            }
+    userLabel.getStyleClass().add("label");
+    l.getStyleClass().add("label-message");
+    textoPrueba.getStyleClass().add("text-message");
 
-            executeTextRequest(TEXT_MODEL, textUser, true);
-            textInfo = textoPrueba;
-            text.clear();
+    // --- Usuario ---
+    vboxUser.getChildren().addAll(userLabel, l);
 
+    // --- Bot header (icono + título) ---
+    Image imgBot = new Image("/assets/roboico.png");
+    ImageView imageView = new ImageView(imgBot);
+    imageView.setFitWidth(30);
+    imageView.setFitHeight(30);
 
-        });
-    }
+    HBox hbox = new HBox(10); // separación entre icono y texto
+    hbox.setAlignment(Pos.CENTER_LEFT);
+    hbox.getChildren().addAll(imageView, chatLabel);
 
+    // --- Bot container ---
+    vboxBot.getChildren().addAll(hbox, textoPrueba);
+
+    // --- Añadir al chat ---
+    chatVBox.getChildren().addAll(vboxUser, vboxBot);
+
+    // Márgenes
+    VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
+    VBox.setMargin(l, new Insets(10, 0, 0, 30));
+    VBox.setMargin(hbox, new Insets(10, 0, 0, 30));
+    VBox.setMargin(textoPrueba, new Insets(10, 0, 0, 30));
+
+    textoPrueba.setWrappingWidth(400);
+
+    // Cargar modelo
+    ensureModelLoaded(TEXT_MODEL).whenComplete((v, err) -> {
+        if (err != null) {
+            Platform.runLater(() -> {
+                textoPrueba.setText("Error loading model.");
+                setButtonsIdle();
+            });
+            return;
+        }
+
+        executeTextRequest(TEXT_MODEL, textUser, true);
+        textInfo = textoPrueba;
+        text.clear();
+    });
+}
 
 
 
