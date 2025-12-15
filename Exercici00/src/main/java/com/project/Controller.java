@@ -58,125 +58,120 @@ private void bloquejarBotons(boolean bloquejar) {
 
     @FXML
     private void afegirPunt(ActionEvent event){
-        
-        if (container.getText().contains(".")){
-            return;
+        container.setText(container.getText() + ".");        
+    }
+
+
+
+    private boolean esNegatiu(String operacio, int i) {
+        char[] operadors = {'+','-','*','/'};
+        if (operacio.charAt(i) != '-') {
+            return false;
         }
-        container.setText(container.getText() + ".");
-        
-    }
-
-
-
-private boolean esNegatiu(String operacio, int i) {
-    char[] operadors = {'+','-','*','/'};
-    if (operacio.charAt(i) != '-') {
-        return false;
-    }
-    if (i == 0) {
-        return true;
-    }
-
-    char anterior = operacio.charAt(i - 1);
-    for (char c : operadors){
-        if (anterior == c){
+        if (i == 0) {
             return true;
         }
+
+        char anterior = operacio.charAt(i - 1);
+        for (char c : operadors){
+            if (anterior == c){
+                return true;
+            }
+        }
+        return false;
     }
-    return false;
-}
-private List<String> separarOperacio(String operacio) {
-    List<String> op = new ArrayList<>();
-    String num = "";
+        private List<String> separarOperacio(String operacio) {
+            List<String> op = new ArrayList<>();
+            String num = "";
 
-    for (int i = 0; i < operacio.length(); i++) {
-        char c = operacio.charAt(i);
+            for (int i = 0; i < operacio.length(); i++) {
+                char c = operacio.charAt(i);
 
-        if (Character.isDigit(c) || c == '.') {
-            num += c; //afegeix el simbol amb el numero
-        } else if (c == '+' || c == '-' || c == '*' || c == '/') {
-            if (esNegatiu(operacio, i)) {
-                num += c; //afegeix el simbol amb el numero
+                if (Character.isDigit(c) || c == '.') {
+                    num += c; //afegeix el simbol amb el numero
+                } else if (c == '+' || c == '-' || c == '*' || c == '/') {
+                    if (esNegatiu(operacio, i)) {
+                        num += c; //afegeix el simbol amb el numero
+                    } else {
+                        if (!num.isEmpty()) {
+                            op.add(num); //afegeix el numero
+                            num = ""; //ho reseteja
+                        }
+                        op.add(String.valueOf(c)); //afegeix el simbol com un item mes del array
+                    }
+                }
+            }
+
+            if (!num.isEmpty()) {
+                op.add(num);
+            }
+
+            return op;
+        }
+
+
+    private List<String> MultiplicacioDivisio(List<String> operacio) {
+        for (int i = 0; i < operacio.size(); i++) {
+            String operador = operacio.get(i);
+
+            if (operador.equals("*") || operador.equals("/")) {
+                double primer = 0;
+                double segon = 0;
+
+                try {
+                    primer = Double.parseDouble(operacio.get(i - 1));
+                    segon = Double.parseDouble(operacio.get(i + 1));
+                } catch (NumberFormatException e) {
+                    container.setText("Numero invalid");
+                    return operacio;
+                }
+
+                double resultat = 0.0;
+
+                if (operador.equals("*")) {
+                    resultat = primer * segon;
+                } else {
+                    if (segon == 0) {
+                        throw new ArithmeticException();
+                    }
+                    resultat = primer / segon;
+                }
+
+                operacio.set(i - 1, String.valueOf(resultat)); //reemplaça el primer nom amb el resultat
+                operacio.remove(i); //eliminaoperador
+                operacio.remove(i); //elimina el segon numero
+                i--; //va cap enrere per comprobar
+            }
+        }
+        return operacio;
+    }
+
+
+    private double SumaResta(List<String> operacio) {
+        double total = 0;
+
+        for (int i = 0; i < operacio.size(); i++) {
+            String num = operacio.get(i);
+            if (i == 0) {
+                total = Double.parseDouble(num);
             } else {
-                if (!num.isEmpty()) {
-                    op.add(num); //afegeix el numero
-                    num = ""; //ho reseteja
+                if (num.equals("+") || num.equals("-")) {
+                    String operador = num;
+                    double numero = Double.parseDouble(operacio.get(i + 1));
+
+                    if (operador.equals("+")) {
+                        total += numero;
+                    } else if (operador.equals("-")) {
+                        total -= numero;
+                    }
+
+                    i++; 
                 }
-                op.add(String.valueOf(c)); //afegeix el simbol com un item mes del array
             }
         }
+
+        return total;
     }
-
-    if (!num.isEmpty()) {
-        op.add(num);
-    }
-
-    return op;
-}
-
-
-private List<String> MultiplicacioDivisio(List<String> operacio) {
-    for (int i = 0; i < operacio.size(); i++) {
-        String operador = operacio.get(i);
-
-        if (operador.equals("*") || operador.equals("/")) {
-            double primer = 0;
-            double segon = 0;
-
-            try {
-                primer = Double.parseDouble(operacio.get(i - 1));
-                segon = Double.parseDouble(operacio.get(i + 1));
-            } catch (NumberFormatException e) {
-                container.setText("Numero invalid");
-                return operacio;
-            }
-
-            double resultat = 0.0;
-
-            if (operador.equals("*")) {
-                resultat = primer * segon;
-            } else {
-                if (segon == 0) {
-                    throw new ArithmeticException();
-                }
-                resultat = primer / segon;
-            }
-
-            operacio.set(i - 1, String.valueOf(resultat)); //reemplaça el primer nom amb el resultat
-            operacio.remove(i); //eliminaoperador
-            operacio.remove(i); //elimina el segon numero
-            i--; //va cap enrere per comprobar
-        }
-    }
-    return operacio;
-}
-
-
-private double SumaResta(List<String> operacio) {
-    double total = 0;
-
-    for (int i = 0; i < operacio.size(); i++) {
-        String num = operacio.get(i);
-        if (i == 0) {
-            total = Double.parseDouble(num);
-        } else {
-            if (num.equals("+") || num.equals("-")) {
-                String operador = num;
-                double numero = Double.parseDouble(operacio.get(i + 1));
-
-                if (operador.equals("+")) {
-                    total += numero;
-                } else if (operador.equals("-")) {
-                    total -= numero;
-                }
-
-                i++; 
-            }
-        }
-    }
-
-    return total;
-}
 
 
 

@@ -123,7 +123,7 @@ private void escollirModel(ActionEvent e) {
     VBox vboxUser = new VBox();
     VBox vboxBot = new VBox();
     Label userLabel = new Label("USUARI");
-    Label l = null; // para el texto del usuario si existe
+    Label l = null; 
     Text descripcion = new Text("Thinking...");
     HBox hbox = new HBox();
 
@@ -131,13 +131,11 @@ private void escollirModel(ActionEvent e) {
 
     if (hasImage) {
         if (text.getText().isEmpty()) {
-            // Caso: solo imagen sin prompt
             prompt = "Describe what's in this image";
             vboxUser.getChildren().add(userLabel);
             mostrarImatge(vboxUser);
 
         } else {
-            // Caso: imagen + prompt escrito por usuario
             prompt = text.getText();
             l = new Label(prompt); 
             vboxUser.getChildren().addAll(userLabel, l);
@@ -146,23 +144,18 @@ private void escollirModel(ActionEvent e) {
             mostrarImatgeAmbPrompt(vboxUser, txtPrompt);
         }
 
-        // Texto del bot mientras procesa
         descripcion.getStyleClass().add("text-message");
         descripcion.setWrappingWidth(400);
 
         vboxBot.getChildren().addAll(hbox, descripcion);
 
-        // Añadir todo al chat
         chatVBox.getChildren().addAll(vboxUser, vboxBot);
 
-        // Aplicar estilos
         setEstilosChat(vboxUser, vboxBot, userLabel, l, descripcion, hbox);
 
-        // Reset
         text.clear();
         imgPreview.setImage(null);
 
-        // Llamada al modelo de visión
         executeImageRequest(VISION_MODEL, prompt, base64Image, descripcion);
         hasImage = false;
 
@@ -170,7 +163,7 @@ private void escollirModel(ActionEvent e) {
         if (text.getText().isEmpty()) {
             return;
         }
-        callStream(e); // si no hay imagen, usamos el flujo normal
+        callStream(e); 
     }
 }
 
@@ -178,16 +171,12 @@ private void escollirModel(ActionEvent e) {
 
 private void setEstilosChat(VBox vboxUser, VBox vboxBot, Label userLabel, Label l, Text textoPrueba, HBox hbox) {
     String cssPath = "assets/labelstyles.css";
-
-    // --- CSS ---
     vboxUser.getStylesheets().add(cssPath);
     vboxBot.getStylesheets().add(cssPath);
     userLabel.getStylesheets().add(cssPath);
     if (l != null) {
         l.getStylesheets().add(cssPath);
     }
-
-    // --- Clases CSS ---
     vboxUser.getStyleClass().add("vboxuser");
     vboxBot.getStyleClass().add("vboxBot");
     userLabel.getStyleClass().add("label");
@@ -195,25 +184,17 @@ private void setEstilosChat(VBox vboxUser, VBox vboxBot, Label userLabel, Label 
         l.getStyleClass().add("label-message");
     }
     textoPrueba.getStyleClass().add("text-message");
-
-    // --- Márgenes ---
     VBox.setMargin(userLabel, new Insets(10, 0, 0, 30));
     if (l != null) {
         VBox.setMargin(l, new Insets(10, 0, 0, 30));
     }
     VBox.setMargin(hbox, new Insets(10, 0, 0, 30));
     VBox.setMargin(textoPrueba, new Insets(10, 0, 0, 30));
-
-    // --- Ajuste de texto ---
     textoPrueba.setWrappingWidth(400);
-
-    // --- Imagen del bot ---
     Image imgBot = new Image(getClass().getResource("/assets/roboico.png").toExternalForm());
     ImageView imageView = new ImageView(imgBot);
     imageView.setFitWidth(30);
     imageView.setFitHeight(30);
-
-    // --- Contenedor del bot (icono + título) ---
     hbox.getChildren().clear();
     hbox.setAlignment(Pos.CENTER_LEFT);
     hbox.setSpacing(10);
@@ -234,21 +215,15 @@ private void callStream(ActionEvent event) {
 
     VBox vboxUser = new VBox();
     VBox vboxBot = new VBox();
-    HBox hbox = new HBox(); // se estiliza después en setEstilosChat
-
-    // --- Usuario ---
+    HBox hbox = new HBox(); 
     vboxUser.getChildren().addAll(userLabel, l);
 
-    // --- Bot container (header + respuesta vacía) ---
     vboxBot.getChildren().addAll(hbox, textoPrueba);
 
-    // --- Añadir al chat ---
     chatVBox.getChildren().addAll(vboxUser, vboxBot);
 
-    // --- Aplicar estilos y formato ---
     setEstilosChat(vboxUser, vboxBot, userLabel, l, textoPrueba, hbox);
 
-    // --- Cargar modelo ---
     ensureModelLoaded(TEXT_MODEL).whenComplete((v, err) -> {
         if (err != null) {
             Platform.runLater(() -> {
