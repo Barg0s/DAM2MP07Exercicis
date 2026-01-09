@@ -2,6 +2,9 @@ import 'dart:io';
 import 'dart:math';
 import 'casella.dart';
 
+
+bool cheat = false;
+
 void generarMines(List<List<Casella>> matrix, int totalMines) {
   Random r = Random();
   int minasColocadas = 0;
@@ -14,6 +17,43 @@ void generarMines(List<List<Casella>> matrix, int totalMines) {
     }
   }
 }
+
+void posarMinesQuadrant(
+  List<List<Casella>> matrix,
+  int filaInici,
+  int filaFi,
+  int colInici,
+  int colFi,
+) {
+  Random r = Random();
+  int collocades = 0;
+
+  while (collocades < 2) {
+    int x = filaInici + r.nextInt(filaFi - filaInici + 1);
+    int y = colInici + r.nextInt(colFi - colInici + 1);
+
+    if (!matrix[x][y].bomba) {
+      matrix[x][y].bomba = true;
+      collocades++;
+    }
+  }
+}
+
+
+void generarMiness(List<List<Casella>> matrix) {
+  // Q1: A–C, 1–5
+  posarMinesQuadrant(matrix, 0, 2, 0, 4);
+
+  // Q2: A–C, 6–10
+  posarMinesQuadrant(matrix, 0, 2, 5, 9);
+
+  // Q3: D–F, 1–5
+  posarMinesQuadrant(matrix, 3, 5, 0, 4);
+
+  // Q4: D–F, 6–10
+  posarMinesQuadrant(matrix, 3, 5, 5, 9);
+}
+
 
 bool destaparCasella(List<List<Casella>> tauler, int x, int y, bool esPrimeraJugada, bool esJugadaUsuari) {
   if (x < 0 || x >= tauler.length || y < 0 || y >= tauler[0].length) return false;
@@ -73,21 +113,28 @@ int contarMinesAdjacents(List<List<Casella>> tauler, int x, int y) {
   return count;
 }
 
-void printTauler(List<List<Casella>> matrix) {
+void printTauler(List<List<Casella>> matrix, bool cheat) {
   List<String> filas = ['A','B','C','D','E','F'];
   List<String> columnas = List.generate(10, (i) => '${i+1}');
-  print('   ${columnas.join(' ')}');
+  print('   ${columnas.join(' ')}   Cheat');
 
   for (int i = 0; i < matrix.length; i++) {
     String fila = '${filas[i]}  ';
     fila += matrix[i].map((c) {
-      if (c.bandera) return 'F';
+      if (c.bandera) return '#';
       if (!c.descoberta) return '.';
       return c.bomba ? '*' : (c.numMinesAdjacents > 0 ? '${c.numMinesAdjacents}' : ' ');
     }).join(' ');
+
+    if (cheat) {
+      fila += '   ';
+      fila += matrix[i].map((c) => c.bomba ? '*' : '.').join(' ');
+    }
+
     print(fila);
   }
 }
+
 
 bool casellesDestapades(List<List<Casella>> matrix) {
   for (var row in matrix) {
@@ -103,14 +150,14 @@ void main() {
     return List.generate(10, (j) => Casella(fila: i, columna: j));
   });
 
-  generarMines(matrix, 8);
+  generarMiness(matrix);
 
   bool esPrimeraJugada = true;
   bool jugant = true;
   List<String> filas = ['A','B','C','D','E','F'];
 
   while (jugant) {
-    printTauler(matrix);
+    printTauler(matrix,false);
     print("Introdueix una opcio:");
     String? opcio = stdin.readLineSync();
     if (opcio == null || opcio.length < 2) {
@@ -133,9 +180,19 @@ void main() {
       for (String s in comandes){
           print(s);
       
-      }
+      } 
+
+      
     continue;
-    }
+    } else if (opcio.toLowerCase() == "cheat" || opcio.toLowerCase() == "trampes") {
+      cheat = true;
+      printTauler(matrix, cheat);
+     continue;
+    } else if (opcio.toLowerCase() == "deactivate cheats" || opcio.toLowerCase() == "desactivar trampes") {
+      cheat = false;
+      printTauler(matrix, cheat);
+     continue;
+}
 
 
 
@@ -167,11 +224,11 @@ void main() {
           if (c.bomba) c.descoberta = true;
         }
       }
-      printTauler(matrix);
+      printTauler(matrix,false);
       jugant = false;
     } else if (casellesDestapades(matrix)) {
       print("Has guanyat");
-      printTauler(matrix);
+      printTauler(matrix,false);
       jugant = false;
     }
   }
