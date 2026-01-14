@@ -1,7 +1,6 @@
-import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -15,17 +14,33 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: Center(
-          child: Row(
+        body: SafeArea(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              OutlinedButton(onPressed: () async {await obtenirDades();},child: const Text('HEROIS'),),
-              const SizedBox(width: 50),
-              OutlinedButton(onPressed: () {print('Botón pulsado');},child: const Text('VILLANS'),),
-              const SizedBox(width: 50),
-              OutlinedButton(onPressed: () {print('Botón pulsado');},child: const Text('EQUIPS'),),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                color: Colors.blue, 
+                child : const Text(
+                'DB',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24),
+              ),
+              ),
 
+              const SizedBox(height: 20),
 
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  categoriaCard("CAT 1"),
+                  const SizedBox(width: 20),
+                  categoriaCard("CAT 2"),
+                  const SizedBox(width: 20),
+                  categoriaCard("CAT 3"),
+                ],
+              ),
             ],
           ),
         ),
@@ -33,22 +48,35 @@ class MyApp extends StatelessWidget {
     );
   }
 
-Future<void> obtenirDades() async {
-  try {
-    // Petición POST al endpoint /getItems
-    final response = await http.post(
-      Uri.parse('http://localhost:3000/getItems'),
-      headers: {'Content-Type': 'application/json'},
+  Widget categoriaCard(String value) {
+    return Card(
+      clipBehavior: Clip.hardEdge,
+      child: InkWell(
+        splashColor: Colors.blue.withAlpha(30),
+        onTap: () {
+          debugPrint("A");
+        },
+        child: SizedBox(
+          width: 250,
+          height: 400,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image(
+                image: AssetImage('assets/negro.png'),
+                width: 250,
+                height: 100,
+              ),
+              SizedBox(height: 10),
+              Text(value),
+            ],
+          ),
+        ),
+      ),
     );
-
-    if (response.statusCode == 200) {
-      print(jsonDecode(response.body));
-    } else {
-      print('Error al obtener datos: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error: $e');
   }
-}
 
+  Future<void> llegirCategories() async {
+    //TODO
+}
 }

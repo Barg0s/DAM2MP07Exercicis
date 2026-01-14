@@ -1,6 +1,11 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-void main() {
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart' show rootBundle;
+
+
+void categories() {
   runApp(const MyApp());
 }
 
@@ -16,15 +21,22 @@ class MyApp extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              OutlinedButton(onPressed: () {print('Botón pulsado');},child: const Text('HEROIS'),),
+              OutlinedButton(onPressed: () {print('Botón pulsado');},child: const Text('VILLANS'),),
               const SizedBox(width: 50),
               OutlinedButton(onPressed: () {print('Botón pulsado');},child: const Text('VILLANS'),),
               const SizedBox(width: 50),
               OutlinedButton(onPressed: () {print('Botón pulsado');},child: const Text('EQUIPS'),),
+              const SizedBox(width: 50),
+              Image.asset('assets/negro.png',
+              width : 150)
+
             ],
           ),
         ),
       ),
     );
   }
+
+
+
 }

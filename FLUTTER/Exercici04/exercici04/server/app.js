@@ -1,35 +1,46 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
+const fs = require('fs');        // Para leer archivos
 const path = require('path');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const port = 3000;
 
-// Leer databse.json
-const dataPath = path.join(__dirname, 'data', 'database.json');
-const items = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+// Continguts estàtics (carpeta public)
+app.use(express.static('public'))
 
-// Ruta POST para obtener todos los items
-app.post('/getItems', (req, res) => {
-    res.json(items);
+// Configurar direcció ‘/’ 
+app.get('/', async (req, res) => {
+    res.send(`Hello World /`)
+})
+
+
+// POST /categories leyendo desde JSON
+app.post('/categories', (req, res) => {
+  const filePath = path.join(__dirname, 'data', 'categories.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error al leer categories.json', err);
+      return res.status(500).json({ error: 'No se pudo leer el archivo' });
+    }
+    const categories = JSON.parse(data);
+    res.json(categories);
+  });
 });
 
-// Ruta GET para obtener un item por id (opcional, para detalle)
-app.post('/getItem', (req, res) => {
-    const id = req.body.id;
-    const item = items.find(i => i.id == id);
-    if (item) res.json(item);
-    else res.status(404).json({error: 'Item no encontrado'});
-});
+// Activar el servidor
+const httpServer = app.listen(port, appListen)
+function appListen () {
+    console.log(`Example app listening on: http://0.0.0.0:${port}`)
+}
 
-// Servir imágenes desde public/Images usando GET
-app.get('/images/:imgName', (req, res) => {
-    const { imgName } = req.params;
-    const imgPath = path.join(__dirname, 'public', 'Images', imgName);
-    res.sendFile(imgPath);
-});
-
-// Iniciar servidor
-app.listen(3000, () => console.log('Servidor escuchando en http://localhost:3000'));
+// Aturar el servidor correctament 
+process.on('SIGTERM', shutDown);
+process.on('SIGINT', shutDown);
+function shutDown() {
+    // Executar aquí el codi previ al tancament de servidor
+    
+    console.log('Received kill signal, shutting down gracefully');
+    httpServer.close()
+    process.exit(0);
+}
