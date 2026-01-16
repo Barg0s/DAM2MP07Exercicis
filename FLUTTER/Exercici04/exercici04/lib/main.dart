@@ -1,9 +1,14 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'appdata.dart'; // tu clase AppData
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppData()..llegirCategories(), // Llamamos al cargar
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,59 +20,72 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                color: Colors.blue, 
-                child : const Text(
-                'DB',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24),
-              ),
-              ),
+          child: Consumer<AppData>(
+            builder: (context, appData, _) {
+              if (appData.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (appData.error.isNotEmpty) {
+                return Center(child: Text(appData.error));
+              }
 
-              const SizedBox(height: 20),
-
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              return Column(
                 children: [
-                  categoriaCard("CAT 1"),
-                  const SizedBox(width: 20),
-                  categoriaCard("CAT 2"),
-                  const SizedBox(width: 20),
-                  categoriaCard("CAT 3"),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    color: Colors.blue,
+                    child: const Text(
+                      'DB',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: appData.categories.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 20),
+                      itemBuilder: (context, index) {
+                        return categoriaCard(
+                        appData.categories[index]["name"]!,
+                        appData.categories[index]["imatge"]!,
+                      );
+
+                      },
+                    ),
+                  ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget categoriaCard(String value) {
+  Widget categoriaCard(String value,String image) {
     return Card(
       clipBehavior: Clip.hardEdge,
       child: InkWell(
         splashColor: Colors.blue.withAlpha(30),
         onTap: () {
-          debugPrint("A");
+          debugPrint("Has pulsado $value");
         },
         child: SizedBox(
-          width: 250,
-          height: 400,
+          width: 100,
+          height: 100,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image(
-                image: AssetImage('assets/negro.png'),
-                width: 250,
-                height: 100,
+              Image.network(
+                "http://localhost:3000/images/$image",
+                width: 50,
+                height: 50,
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(value),
             ],
           ),
@@ -75,8 +93,4 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
-
-  Future<void> llegirCategories() async {
-    //TODO
-}
 }
