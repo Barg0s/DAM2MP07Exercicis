@@ -1,42 +1,52 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');       
+const fs = require('fs');
 const path = require('path');
 
 const app = express();
 const port = 3000;
 
-app.use(express.static('public'))
+app.use(cors());
+app.use(express.json());
 
-// Configurar direcció ‘/’ 
-app.get('/', async (req, res) => {
-    res.send(`Hello World /`)
-})
+// Servir imágenes desde public/images
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-
-app.post('/categories', (req, res) => {
+// Función para leer el JSON
+function readData() {
   const filePath = path.join(__dirname, 'data', 'database.json');
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error('Error al leer categories.json', err);
-      return res.status(500).json({ error: 'No se pudo leer el archiv o' });
-    }
-    const categories = JSON.parse(data);
-    res.json(categories);
-  });
+  const raw = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(raw);
+}
+
+// 👉 RUTA CORRECTA DE CATEGORIES
+app.post('/categories', (req, res) => {
+  try {
+    const data = readData();
+    res.json(data.categories); 
+  } catch (err) {
+    res.status(500).json({ error: 'Error leyendo categories' });
+  }
+});
+app.post('/characters', (req, res) => {
+  const { categoryId } = req.body;
+
+  if (!categoryId) {
+    return res.status(400).json({ error: 'categoryId requerido' });
+  }
+
+  try {
+    const data = readData();
+    const characters = data.characters.filter(
+      c => c.categoryId === categoryId
+    );
+    res.json(characters);
+  } catch (err) {
+    res.status(500).json({ error: 'Error leyendo personajes' });
+  }
 });
 
-// Activar el servidor
-const httpServer = app.listen(port, appListen)
-function appListen () {
-    console.log(`Example app listening on: http://0.0.0.0:${port}`)
-}
-
-process.on('SIGTERM', shutDown);
-process.on('SIGINT', shutDown);
-function shutDown() {
-    
-    console.log('Received kill signal, shutting down gracefully');
-    httpServer.close()
-    process.exit(0);
-}
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
