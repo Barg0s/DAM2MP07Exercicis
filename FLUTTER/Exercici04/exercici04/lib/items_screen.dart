@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'appdata.dart'; 
-import 'items_screen.dart';
 
-void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppData()..llegirCategories(), 
-      child: const MyApp(),
-    ),
-  );
-}
+class ItemsScreen extends StatelessWidget {
+  const ItemsScreen({super.key});
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +16,7 @@ class MyApp extends StatelessWidget {
             builder: (context, appData, _) {
               if (appData.isLoading) {
                 return const Center(child: CircularProgressIndicator());
-              }
+              }   
               if (appData.error.isNotEmpty) {
                 return Center(child: Text(appData.error));
               }
@@ -44,18 +35,18 @@ class MyApp extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
-                    height: 120,
+                    height: 200,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: appData.categories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 60),
+                      itemCount: appData.personatges.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 20),
                       itemBuilder: (context, index) {
-                        return categoriaCard(
-                        appData.categories[index]["id"]!,
-
-                        appData.categories[index]["name"]!,
-                        appData.categories[index]["imatge"]!,
+                        final p = appData.personatges[index];
+                        return personatgeCard(
+                        p["nom"]!,
+                        p["alias"]!,
+                        p["imatge"]!,
                         context
                       );
 
@@ -70,10 +61,9 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
-
-  Widget categoriaCard(
-  String id,
-  String value,
+Widget personatgeCard(
+  String nom,
+  String alias,
   String image,
   BuildContext context,
 ) {
@@ -82,21 +72,11 @@ class MyApp extends StatelessWidget {
     child: InkWell(
       splashColor: Colors.blue.withAlpha(30),
       onTap: () {
-        final appData = context.read<AppData>();
-
-        appData.llegirPersonatges(int.parse(id));
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const ItemsScreen(),
-          ),
-        );
+      debugPrint("Has pulsado $alias");
       },
-
       child: SizedBox(
         width: 100,
-        height: 50,
+        height: 100,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -106,7 +86,8 @@ class MyApp extends StatelessWidget {
               height: 50,
             ),
             const SizedBox(height: 10),
-            Text(value),
+            Text(nom),
+            Text(alias),
           ],
         ),
       ),

@@ -9,17 +9,14 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-// Servir imágenes desde public/images
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// Función para leer el JSON
 function readData() {
   const filePath = path.join(__dirname, 'data', 'database.json');
   const raw = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(raw);
 }
 
-// 👉 RUTA CORRECTA DE CATEGORIES
 app.post('/categories', (req, res) => {
   try {
     const data = readData();

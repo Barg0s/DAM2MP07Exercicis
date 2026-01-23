@@ -1,55 +1,96 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:http/http.dart' as http;
 
-
-class AppData extends ChangeNotifier{
+class AppData extends ChangeNotifier {
   List<Map<String, String>> categories = [];
+  List<Map<String, String>> personatges = [];
+
   bool isLoading = false;
   String error = "";
-  HttpClient? _httpClient;
-  IOClient? _ioClient;
+
   http.Client? _client;
 
-Future<void> llegirCategories() async {
-  isLoading = true;
-  error = '';
-  notifyListeners();
- _client ??= IOClient(HttpClient()); 
-  try {
-    // Creamos la request POST
-    var request = http.Request(
-      'POST',
-      Uri.parse('http://localhost:3000/categories'), // endpoint
-    );
+  // -------------------------
+  // POST /categories
+  // -------------------------
+  Future<void> llegirCategories() async {
+    isLoading = true;
+    error = '';
+    notifyListeners();
 
-    request.headers.addAll({'Content-Type': 'application/json'});
-    request.body = jsonEncode({}); 
-    var streamedResponse = await _client!.send(request);
-    var responseString = await streamedResponse.stream.bytesToString();
-    if (streamedResponse.statusCode == 200) {
-      final List data = jsonDecode(responseString);
-      categories = data.map((e) => {
-        "name": e['alias'].toString(),
-        "imatge": e['imatge'].toString(),
-      }).toList();
-            
+    _client ??= IOClient(HttpClient());
 
-      error = '';
-    } else {
-      error = 'Error ${streamedResponse.statusCode}';
+    try {
+      final response = await _client!.post(
+        Uri.parse('http://localhost:3000/categories'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({}), // POST vacío
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        categories = data.map((e) => {
+              "id": e['id'].toString(),
+              "name": e['name'].toString(),
+              "imatge": e['imatge'].toString(),
+            }).toList();
+
+        error = '';
+      } else {
+        error = 'Error ${response.statusCode}';
+        categories = [];
+      }
+    } catch (e) {
+      error = 'Error de conexión: $e';
       categories = [];
     }
-  } catch (e) {
-    error = 'Error de conexión: $e';
-    categories = [];
+
+    isLoading = false;
+    notifyListeners();
   }
 
-  isLoading = false;
-  notifyListeners();
-}
+  // -------------------------
+  // POST /characters
+  // -------------------------
+  Future<void> llegirPersonatges(int categoryId) async {
+    isLoading = true;
+    error = '';
+    notifyListeners();
 
+    _client ??= IOClient(HttpClient());
+
+    try {
+      final response = await _client!.post(
+        Uri.parse('http://localhost:3000/characters'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'categoryId': categoryId}),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        personatges = data.map((e) => {
+              "id": e['id'].toString(),
+              "nom": e['nom'].toString(),
+              "alias": e['alias'].toString(),
+              "imatge": e['imatge'].toString(),
+            }).toList();
+
+        error = '';
+      } else {
+        error = 'Error ${response.statusCode}';
+        personatges = [];
+      }
+    } catch (e) {
+      error = 'Error de conexión: $e';
+      personatges = [];
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
 }

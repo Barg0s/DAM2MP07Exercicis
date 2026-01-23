@@ -16,6 +16,31 @@
       "imatge": "negro.png"
     }
   ],
+
+
+  "afiliacio":[
+    {
+      "id": 1,
+      "name": "Els 4 fantastics",
+      "imatge": "negro.png"
+
+
+    },
+    {
+      "id": 2,
+      "name": "Vengadores",
+      "imatge": "negro.png"
+
+    },
+    {
+      "id": 3,
+      "name": "X-MEN",
+      "imatge": "negro.png"
+
+    }
+
+
+  ],
   "characters": [
     {
       "id": 1,
@@ -24,7 +49,7 @@
       "alias": "La dona invisible",
       "PrimeraAparicio": 1961,
       "habilitats": "Invisiblitat",
-      "Afiliacio": "Els 4 Fantastics",
+      "AfiliacioId": 1,
       "imatge": "negro.png"
     },
     {
@@ -34,7 +59,7 @@
       "alias": "Mister Fantastic",
       "PrimeraAparicio": 1961,
       "habilitats": "Elasticitat",
-      "Afiliacio": "Els 4 Fantastics",
+      "AfiliacioId": 1,
       "imatge": "negro.png"
     },
     {
@@ -44,7 +69,7 @@
       "alias": "La torxa humana",
       "PrimeraAparicio": 1961,
       "habilitats": "Pirocinesi",
-      "Afiliacio": "Els 4 Fantastics",
+      "AfiliacioId": 1,
       "imatge": "negro.png"
     },
     {
@@ -54,7 +79,7 @@
       "alias": "La cosa",
       "PrimeraAparicio": 1961,
       "habilitats": "Pell de roca",
-      "Afiliacio": "Els 4 Fantastics",
+      "AfiliacioId": 1,
       "imatge": "negro.png"
     },
     {
@@ -64,7 +89,7 @@
       "alias": "Magik",
       "PrimeraAparicio": 1961,
       "habilitats": "Obrir portals amb l'espassa",
-      "Afiliacio": "X-men",
+      "Afiliacio": 3,
       "imatge": "negro.png"
     },
     {
@@ -74,7 +99,7 @@
       "alias": "Magneto",
       "PrimeraAparicio": 1961,
       "habilitats": "Manipulació dels metalls",
-      "Afiliacio": ["X-men", "germandat dels mutants", "Consell Tranquil de Krakoa"],
+      "Afiliacio": [3],
       "imatge": "negro.png"
     }
   ]
