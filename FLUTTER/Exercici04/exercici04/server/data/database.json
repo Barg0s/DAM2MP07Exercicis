@@ -2,18 +2,13 @@
   "categories": [
     {
       "id": 1,
-      "name": "NOMBRE 1",
+      "name": "HEROIS",
       "imatge": "negro.png"
     },
     {
       "id": 2,
-      "name": "NOMBRE 2",
+      "name": "VILLANS",
       "imatge": "suestorm.jpeg"
-    },
-    {
-      "id": 3,
-      "name": "NOMBRE 3",
-      "imatge": "negro.png"
     }
   ],
 
@@ -22,14 +17,14 @@
     {
       "id": 1,
       "name": "Els 4 fantastics",
-      "imatge": "negro.png"
+      "imatge": "afiliacions/4fantastics.png"
 
 
     },
     {
       "id": 2,
       "name": "Vengadores",
-      "imatge": "negro.png"
+      "imatge": "afiliacions/avengers.png"
 
     },
     {
@@ -37,70 +32,484 @@
       "name": "X-MEN",
       "imatge": "negro.png"
 
+    },
+    {
+      "id": 4,
+      "name": "Guardians de la galaxia",
+      "imatge": "negro.png"
+
+    },
+    {
+      "id": 5,
+      "name": "Deus d'asgard",
+      "imatge": "negro.png"
+
+    },
+    {
+      "id": 6,
+      "name": "Cavallers de Marvel",
+      "imatge": "negro.png"
+
+    },
+    {
+      "id": 7,
+      "name": "Agents d'atlas",
+      "imatge": "negro.png"
+
     }
 
 
   ],
   "characters": [
-    {
-      "id": 1,
-      "categoryId": 2,
-      "nom": "Susan Storm",
-      "alias": "La dona invisible",
-      "PrimeraAparicio": 1961,
-      "habilitats": "Invisiblitat",
-      "AfiliacioId": 1,
-      "imatge": "negro.png"
-    },
-    {
-      "id": 2,
-      "categoryId": 3,
-      "nom": "Reed Richards",
-      "alias": "Mister Fantastic",
-      "PrimeraAparicio": 1961,
-      "habilitats": "Elasticitat",
-      "AfiliacioId": 1,
-      "imatge": "negro.png"
-    },
-    {
-      "id": 3,
-      "categoryId": 3,
-      "nom": "Johnny Storm",
-      "alias": "La torxa humana",
-      "PrimeraAparicio": 1961,
-      "habilitats": "Pirocinesi",
-      "AfiliacioId": 1,
-      "imatge": "negro.png"
-    },
-    {
-      "id": 4,
-      "categoryId": 1,
-      "nom": "Benjamin J. Grimm",
-      "alias": "La cosa",
-      "PrimeraAparicio": 1961,
-      "habilitats": "Pell de roca",
-      "AfiliacioId": 1,
-      "imatge": "negro.png"
-    },
-    {
-      "id": 5,
-      "categoryId": 2,
-      "nom": "Illyana Rasputina",
-      "alias": "Magik",
-      "PrimeraAparicio": 1961,
-      "habilitats": "Obrir portals amb l'espassa",
-      "Afiliacio": 3,
-      "imatge": "negro.png"
-    },
-    {
-      "id": 6,
-      "categoryId": 2,
-      "nom": "Erik Lehnsherr",
-      "alias": "Magneto",
-      "PrimeraAparicio": 1961,
-      "habilitats": "Manipulació dels metalls",
-      "Afiliacio": [3],
-      "imatge": "negro.png"
-    }
-  ]
+  {
+    "id": 1,
+    "category": "",
+    "nom": "Adam Warlock",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "adam_warlock.png"
+  },
+  {
+    "id": 2,
+    "category": "",
+    "nom": "Black Panther",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "black_panther.png"
+  },
+  {
+    "id": 3,
+    "category": "",
+    "nom": "Black Widow",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "black_widow.png"
+  },
+  {
+    "id": 4,
+    "category": "",
+    "nom": "Captain America",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "captain_america.png"
+  },
+  {
+    "id": 5,
+    "category": "",
+    "nom": "Cloak and Dagger",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "cloak_and_dagger.png"
+  },
+  {
+    "id": 6,
+    "category": "",
+    "nom": "Doctor Strange",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "doctor_strange.png"
+  },
+  {
+    "id": 7,
+    "category": "",
+    "nom": "Groot",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "groot.png"
+  },
+  {
+    "id": 8,
+    "category": "",
+    "nom": "Hawkeye",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "hawkeye.png"
+  },
+  {
+    "id": 9,
+    "category": "",
+    "nom": "Hela",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "hela.png"
+  },
+  {
+    "id": 10,
+    "category": "",
+    "nom": "Hulk",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "hulk.png"
+  },
+  {
+    "id": 11,
+    "category": "",
+    "nom": "Iron Fist",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "iron_fist.png"
+  },
+  {
+    "id": 12,
+    "category": "",
+    "nom": "Iron Man",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "iron_man.png"
+  },
+  {
+    "id": 13,
+    "category": "",
+    "nom": "Jeff the Land Shark",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "jeff_the_land_shark.png"
+  },
+  {
+    "id": 14,
+    "category": "",
+    "nom": "Loki",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "loki.png"
+  },
+  {
+    "id": 15,
+    "category": "",
+    "nom": "Luna Snow",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "luna_snow.png"
+  },
+  {
+    "id": 16,
+    "category": "",
+    "nom": "Magik",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "magik.png"
+  },
+  {
+    "id": 17,
+    "category": "",
+    "nom": "Magneto",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "magneto.png"
+  },
+  {
+    "id": 18,
+    "category": "",
+    "nom": "Mantis",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "mantis.png"
+  },
+  {
+    "id": 19,
+    "category": "",
+    "nom": "Moon Knight",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "moon_knight.png"
+  },
+  {
+    "id": 20,
+    "category": "",
+    "nom": "Namor",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "namor.png"
+  },
+  {
+    "id": 21,
+    "category": "",
+    "nom": "Peni Parker",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "peni_parker.png"
+  },
+  {
+    "id": 22,
+    "category": "",
+    "nom": "Psylocke",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "psyloke.png"
+  },
+  {
+    "id": 23,
+    "category": "",
+    "nom": "The Punisher",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "the_punisher.png"
+  },
+  {
+    "id": 24,
+    "category": "",
+    "nom": "Rocket Raccoon",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "rocket_raccoon.png"
+  },
+  {
+    "id": 25,
+    "category": "",
+    "nom": "Scarlet Witch",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "scarlet_witch.png"
+  },
+  {
+    "id": 26,
+    "category": "",
+    "nom": "Spider-Man",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "spider_man.png"
+  },
+  {
+    "id": 27,
+    "category": "",
+    "nom": "Squirrel Girl",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "squirrel_girl.png"
+  },
+  {
+    "id": 28,
+    "category": "",
+    "nom": "Star-Lord",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "star_lord.png"
+  },
+  {
+    "id": 29,
+    "category": "",
+    "nom": "Storm",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "storm.png"
+  },
+  {
+    "id": 30,
+    "category": "",
+    "nom": "Thor",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "thor.png"
+  },
+  {
+    "id": 31,
+    "category": "",
+    "nom": "Venom",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "venom.png"
+  },
+  {
+    "id": 32,
+    "category": "",
+    "nom": "Winter Soldier",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "winter_soldier.png"
+  },
+  {
+    "id": 33,
+    "category": "",
+    "nom": "Wolverine",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "wolverine.png"
+  },
+  {
+    "id": 34,
+    "category": "",
+    "nom": "Mister Fantastic",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "mister_fantastic.png"
+  },
+  {
+    "id": 35,
+    "category": "",
+    "nom": "Invisible Woman",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "invisible_woman.png"
+  },
+  {
+    "id": 36,
+    "category": "",
+    "nom": "Human Torch",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "human_torch.png"
+  },
+  {
+    "id": 37,
+    "category": "",
+    "nom": "The Thing",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "the_thing.png"
+  },
+  {
+    "id": 38,
+    "category": "",
+    "nom": "Emma Frost",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "emma_frost.png"
+  },
+  {
+    "id": 39,
+    "category": "",
+    "nom": "Ultron",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "ultron.png"
+  },
+  {
+    "id": 40,
+    "category": "",
+    "nom": "Phoenix",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "phoenix.png"
+  },
+  {
+    "id": 41,
+    "category": "",
+    "nom": "Blade",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "blade.png"
+  },
+  {
+    "id": 42,
+    "category": "",
+    "nom": "Angela",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "angela.png"
+  },
+  {
+    "id": 43,
+    "category": "",
+    "nom": "Daredevil",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "daredevil.png"
+  },
+  {
+    "id": 44,
+    "category": "",
+    "nom": "Gambit",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "gambit.png"
+  },
+  {
+    "id": 45,
+    "category": "",
+    "nom": "Rogue",
+    "alias": "",
+    "PrimeraAparicio": null,
+    "habilitats": "",
+    "AfiliacioId": null,
+    "imatge": "rogue.png"
+  }
+]
 }

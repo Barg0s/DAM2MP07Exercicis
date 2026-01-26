@@ -5,12 +5,22 @@ import 'appdata.dart';
 class ItemsScreen extends StatelessWidget {
   const ItemsScreen({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
+        appBar: AppBar(
+
+          title: const Text('DB',textAlign: TextAlign.center,style: TextStyle(fontSize: 24,fontWeight: FontWeight.bold,color: Colors.white),),
+          backgroundColor: Colors.blue,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+        ),
         body: SafeArea(
           child: Consumer<AppData>(
             builder: (context, appData, _) {
@@ -27,15 +37,11 @@ class ItemsScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     color: Colors.blue,
-                    child: const Text(
-                      'DB',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 24),
-                    ),
+
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
-                    height: 200,
+                    height: 450,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -44,12 +50,11 @@ class ItemsScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final p = appData.personatges[index];
                         return personatgeCard(
-                        p["nom"]!,
-                        p["alias"]!,
-                        p["imatge"]!,
-                        context
-                      );
-
+                          p["nom"]!,
+                          p["alias"]!,
+                          p["imatge"]!,
+                          context
+                        );
                       },
                     ),
                   ),
@@ -61,37 +66,45 @@ class ItemsScreen extends StatelessWidget {
       ),
     );
   }
-Widget personatgeCard(
-  String nom,
-  String alias,
-  String image,
-  BuildContext context,
-) {
-  return Card(
-    clipBehavior: Clip.hardEdge,
-    child: InkWell(
-      splashColor: Colors.blue.withAlpha(30),
-      onTap: () {
-      debugPrint("Has pulsado $alias");
-      },
-      child: SizedBox(
-        width: 100,
-        height: 100,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.network(
-              "http://localhost:3000/images/$image",
-              width: 50,
-              height: 50,
-            ),
-            const SizedBox(height: 10),
-            Text(nom),
-            Text(alias),
-          ],
+
+  Widget personatgeCard(
+    String nom,
+    String alias,
+    String image,
+    BuildContext context,
+  ) {
+    return Card(
+      clipBehavior: Clip.hardEdge,
+      child: InkWell(
+        splashColor: Colors.blue.withAlpha(30),
+        onTap: () {
+          debugPrint("Has pulsado $alias");
+        },
+        child: SizedBox(
+          width: 250,
+          height: 100,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.network(
+                "http://localhost:3000/images/$image",
+                width: 250,
+                height: 250,
+                fit: BoxFit.cover,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                nom,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(alias),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
