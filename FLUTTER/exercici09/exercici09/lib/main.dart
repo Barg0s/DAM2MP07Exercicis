@@ -65,6 +65,8 @@
                       // ULTIMO
                       const LabelExample(text: "Arxiu a encriptar"),
                           const SizedBox(height: 8),
+                      Row(
+                        children: [
                           Expanded(
                             child: TextField(
                               decoration: const InputDecoration(
@@ -72,7 +74,19 @@
                                 hintText: 'document.txt',
                               ),
                             ),
-                            ),
+      
+                          ),
+                                                   
+                          const SizedBox(width: 10),
+                          
+                          OutlinedButton(
+                            onPressed: () {
+                              print("Button pressed");
+                            },
+                            child: const Text('Navega...'),
+                          ),
+                        ],
+                      ),
                       SizedBox(height: 8),
                       const Divider(thickness: 0.5,color: Colors.grey,),
                       SizedBox(height: 100),
