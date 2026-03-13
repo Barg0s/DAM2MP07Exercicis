@@ -38,6 +38,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  path_provider: ^2.0.17
+  file_picker: ^6.1.0
+  encrypt: ^5.0.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
