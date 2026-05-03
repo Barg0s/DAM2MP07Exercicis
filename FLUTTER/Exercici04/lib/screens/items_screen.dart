@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../widgets/item_tile.dart';
 import 'detail_screen.dart';
 import '../services/items_service.dart';
+import '../models/item.dart';
 
 class ItemsScreen extends StatefulWidget {
   final String category;
@@ -21,7 +22,8 @@ class ItemsScreen extends StatefulWidget {
 }
 
 class _ItemsScreenState extends State<ItemsScreen> {
-  List items = [];
+  List<Item> items = [];
+
   bool isLoading = true;
 
   @override
@@ -66,14 +68,14 @@ class _ItemsScreenState extends State<ItemsScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: ItemTile(
-                    name: item["name"],
+                    name: item.name,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailScreen(
-                            id: item["id"],
-                            name: item["name"],
+                            id: item.id,
+                            name: item.name,
                           ),
                         ),
                       );

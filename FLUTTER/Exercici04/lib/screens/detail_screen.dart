@@ -1,3 +1,4 @@
+import 'package:exercici04/models/detail.dart';
 import 'package:flutter/material.dart';
 import '../services/details_service.dart';
 
@@ -16,7 +17,7 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  Map<String, dynamic>? detail;
+  Detail? detail;
   bool isLoading = true;
 
   @override
@@ -61,7 +62,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       const SizedBox(height: 20),
 
                       Image.network(
-                        DetailsService.getImageUrl(detail!["image"]),
+                        DetailsService.getImageUrl(detail!.image),
                         height: 250,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -79,7 +80,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       const SizedBox(height: 20),
 
                       Text(
-                        detail!["name"] ?? widget.name,
+                        detail!.name ?? widget.name,
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
@@ -91,7 +92,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Text(
-                          detail!["description"] ??
+                          detail!.description ??
                               "Sin descripción disponible",
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 16),

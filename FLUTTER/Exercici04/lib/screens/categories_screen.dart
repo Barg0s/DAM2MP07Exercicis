@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/categories_service.dart';
 import '../widgets/categoriaCard.dart';
 import 'items_screen.dart';
+import '../models/category.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -12,7 +13,7 @@ class CategoriesScreen extends StatefulWidget {
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  List categories = [];
+  List<Category> categories = [];
   bool isLoading = true;
 
   @override
@@ -55,14 +56,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: CategoriaCard(
-                    text: category["name"],
+                    text: category.name,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ItemsScreen(
-                            category: category["name"],
-                            categoryId: category["id"],
+                            category: category.name,
+                            categoryId: category.id,
                           ),
                         ),
                       );
