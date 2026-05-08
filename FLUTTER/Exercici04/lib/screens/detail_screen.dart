@@ -48,11 +48,24 @@ class _DetailScreenState extends State<DetailScreen> {
           ? const Center(child: CircularProgressIndicator())
           : detail == null
           ? const Center(child: Text("No se encontraron detalles"))
-          : Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: DetailCard(detail: detail!),
-              ),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                double maxWidth = 600;
+
+                return Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth < maxWidth
+                            ? constraints.maxWidth
+                            : maxWidth,
+                      ),
+                      child: DetailCard(detail: detail!),
+                    ),
+                  ),
+                );
+              },
             ),
     );
   }

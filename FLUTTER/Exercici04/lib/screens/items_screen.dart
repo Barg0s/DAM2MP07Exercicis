@@ -51,20 +51,14 @@ class _ItemsScreenState extends State<ItemsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category),
-        backgroundColor: Colors.red,
-      ),
+      appBar: AppBar(title: Text(widget.category), backgroundColor: Colors.red),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
-
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: ItemTile(
@@ -73,10 +67,8 @@ class _ItemsScreenState extends State<ItemsScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DetailScreen(
-                            id: item.id,
-                            name: item.name,
-                          ),
+                          builder: (context) =>
+                              DetailScreen(id: item.id, name: item.name),
                         ),
                       );
                     },

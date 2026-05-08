@@ -43,44 +43,57 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("BARGADOS DB",
-        style: TextStyle(fontWeight: FontWeight.bold),
+        title: const Text(
+          "BARGADOS DB",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.red,
-
-        
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : GridView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: categories.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // columnas
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 3,
-              ),
-              itemBuilder: (context, index) {
-                final category = categories[index];
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                int crossAxisCount = 2;
 
-                return CategoriaCard(
-                  text: category.name,
-                  logo: category.logo,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ItemsScreen(
-                          category: category.name,
-                          categoryId: category.id,
-                        ),
-                      ),
+                if (constraints.maxWidth < 600) {
+                  crossAxisCount = 1;
+                } else if (constraints.maxWidth < 900) {
+                  crossAxisCount = 2;
+                } else {
+                  crossAxisCount = 2;
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: categories.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 3,
+                  ),
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+
+                    return CategoriaCard(
+                      text: category.name,
+                      logo: category.logo,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ItemsScreen(
+                              category: category.name,
+                              categoryId: category.id,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
               },
             ),
-          );
-        }
-      }
+    );
+  }
+}
