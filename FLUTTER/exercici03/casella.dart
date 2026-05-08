@@ -14,4 +14,5 @@ class Casella {
     this.bandera = false,
     this.numMinesAdjacents = 0,
   });
+
 }

@@ -4,7 +4,7 @@ import 'casella.dart';
 
 
 bool cheat = false;
-
+int comptadorTirades = 0;
 void posarMinesQuadrant(
   List<List<Casella>> matrix,
   int filaInici,
@@ -42,29 +42,30 @@ void generarMiness(List<List<Casella>> matrix) {
 }
 
 
-bool destaparCasella(List<List<Casella>> tauler, int x, int y, bool esPrimeraJugada, bool esJugadaUsuari) {
+bool destaparCasella(List<List<Casella>> tauler, int x, int y, bool esPrimeraJugada) {
   if (x < 0 || x >= tauler.length || y < 0 || y >= tauler[0].length) return false;
 
   Casella casella = tauler[x][y];
+
   if (casella.descoberta || casella.bandera) return false;
 
   if (casella.bomba) {
     if (esPrimeraJugada) {
       Random r = Random();
+
       while (true) {
         int nx = r.nextInt(tauler.length);
         int ny = r.nextInt(tauler[0].length);
-        Casella nueva = tauler[nx][ny];
-        if (!nueva.bomba && !nueva.descoberta) {
-          nueva.bomba = true;
+
+        if (!tauler[nx][ny].bomba) {
+          tauler[nx][ny].bomba = true;
           casella.bomba = false;
           break;
         }
       }
-    } else if (esJugadaUsuari) {
-      return true; 
-    } else {
       return false;
+    } else {
+      return true; 
     }
   }
 
@@ -76,7 +77,7 @@ bool destaparCasella(List<List<Casella>> tauler, int x, int y, bool esPrimeraJug
     for (int dx = -1; dx <= 1; dx++) {
       for (int dy = -1; dy <= 1; dy++) {
         if (dx != 0 || dy != 0) {
-          destaparCasella(tauler, x + dx, y + dy, false, false);
+          destaparCasella(tauler, x + dx, y + dy, false);
         }
       }
     }
@@ -102,26 +103,41 @@ int contarMinesAdjacents(List<List<Casella>> tauler, int x, int y) {
 
 void printTauler(List<List<Casella>> matrix, bool cheat) {
   List<String> filas = ['A','B','C','D','E','F'];
-  List<String> columnas = List.generate(10, (i) => '${i+1}');
-  print('   ${columnas.join(' ')}   Cheat');
+  List<String> columnas = List.generate(10, (i) => '$i');
+
+  String headerNormal = '   ${columnas.join(' ')}';
+  String headerCheat = '   ${columnas.join(' ')}';
+
+  if (cheat) {
+    print('$headerNormal     $headerCheat');
+  } else {
+    print(headerNormal);
+  }
 
   for (int i = 0; i < matrix.length; i++) {
-    String fila = '${filas[i]}  ';
-    fila += matrix[i].map((c) {
-      if (c.bandera) return '#';
-      if (!c.descoberta) return '.';
-      return c.bomba ? '*' : (c.numMinesAdjacents > 0 ? '${c.numMinesAdjacents}' : ' ');
-    }).join(' ');
+    String filaNormal = '${filas[i]}  ' +
+        matrix[i].map((c) {
+          if (c.bandera) return '#';
+          if (!c.descoberta) return '·';
+          if (c.bomba) return '*';
+          return (c.numMinesAdjacents > 0 ? '${c.numMinesAdjacents}' : ' ');
+        }).join(' ');
 
     if (cheat) {
-      fila += '   ';
-      fila += matrix[i].map((c) => c.bomba ? '*' : '.').join(' ');
-    }
+      String filaCheat = '${filas[i]}  ' +
+          matrix[i].map((c) {
+            if (c.bandera) return '#';
+            if (c.bomba) return '*';
+            if (!c.descoberta) return '·';
+            return (c.numMinesAdjacents > 0 ? '${c.numMinesAdjacents}' : ' ');
+          }).join(' ');
 
-    print(fila);
+      print('$filaNormal     $filaCheat');
+    } else {
+      print(filaNormal);
+    }
   }
 }
-
 
 bool casellesDestapades(List<List<Casella>> matrix) {
   for (var row in matrix) {
@@ -144,7 +160,7 @@ void main() {
   List<String> filas = ['A','B','C','D','E','F'];
 
   while (jugant) {
-    printTauler(matrix,false);
+    printTauler(matrix,cheat);
     print("Introdueix una opcio:");
     String? opcio = stdin.readLineSync();
     if (opcio == null || opcio.length < 2) {
@@ -153,12 +169,14 @@ void main() {
     //BANDERA
     bool ponerBandera = false;
     List<String> parts = opcio.trim().split(" ");
-    if (parts[0].toLowerCase() == "flag" || parts[0].toLowerCase() == "bandera") {
+    String coord = parts[0];
+    bool esBandera = parts.length > 1 && (parts[1] == "flag" || parts[1] == "bandera");
+    if (esBandera) {
       ponerBandera = true;
       if (parts.length < 2) {
         continue;
       }
-      opcio = parts[1];
+      opcio = coord;
     }
     //AJUDA
 
@@ -173,24 +191,23 @@ void main() {
     continue;
     } else if (opcio.toLowerCase() == "cheat" || opcio.toLowerCase() == "trampes") {
       cheat = true;
-      printTauler(matrix, cheat);
-     continue;
+      continue;
     } else if (opcio.toLowerCase() == "deactivate cheats" || opcio.toLowerCase() == "desactivar trampes") {
       cheat = false;
-      printTauler(matrix, cheat);
-     continue;
+      continue;
 }
 
 
 
-    // CASELLA NORMAL  
-    String letraFila = opcio[0].toUpperCase();
-    String numeroCol = opcio.substring(1);
+// CASELLA NORMAL  
+    String letraFila = coord[0].toUpperCase();
+    String numeroCol = coord.substring(1);
 
     int fila = filas.indexOf(letraFila);
-    int columna = int.tryParse(numeroCol)! - 1;
+    int? columna = int.tryParse(numeroCol);
 
-    if (fila < 0 || fila >= matrix.length || columna < 0 || columna >= matrix[0].length) {
+    if (fila < 0 || columna == null || columna < 0 || columna >= matrix[0].length) {
+      print("Coordenada no vàlida");
       continue;
     }
 
@@ -198,25 +215,26 @@ void main() {
 
     if (ponerBandera) {
       casella.bandera = !casella.bandera;
-      continue;
+      continue; 
     }
 
-    bool esBomba = destaparCasella(matrix, fila, columna, esPrimeraJugada, true);
+    bool esBomba = destaparCasella(matrix, fila, columna, esPrimeraJugada);
+    comptadorTirades++; 
     esPrimeraJugada = false;
 
     if (esBomba) {
-      print("Has perdut");
+      print("Has perdut!");
       for (var row in matrix) {
-        for (var c in row) {
-          if (c.bomba) c.descoberta = true;
-        }
+        for (var c in row) { if (c.bomba) c.descoberta = true; }
       }
-      printTauler(matrix,false);
+      printTauler(matrix, false);
+      print("Número de tirades: $comptadorTirades");
       jugant = false;
     } else if (casellesDestapades(matrix)) {
-      print("Has guanyat");
-      printTauler(matrix,false);
+      print("Has guanyat!");
+      printTauler(matrix, false);
+      print("Has fet $comptadorTirades tirades.");
       jugant = false;
     }
-  }
+    }
 }
