@@ -13,10 +13,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
 
-  final List<Widget> screens = const [
-    CategoriesScreen(),
-    SearchScreen(),
-  ];
+  final List<Widget> screens = const [CategoriesScreen(), SearchScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.category),
             label: "Categories",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Search",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
         ],
       ),
     );
