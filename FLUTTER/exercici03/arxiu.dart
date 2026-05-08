@@ -5,16 +5,9 @@ import 'casella.dart';
 
 bool cheat = false;
 int comptadorTirades = 0;
-void posarMinesQuadrant(
-  List<List<Casella>> matrix,
-  int filaInici,
-  int filaFi,
-  int colInici,
-  int colFi,
-) {
+void posarMinesQuadrant(List<List<Casella>> matrix,int filaInici,int filaFi,int colInici,int colFi) {
   Random r = Random();
   int collocades = 0;
-
   while (collocades < 2) {
     int x = filaInici + r.nextInt(filaFi - filaInici + 1);
     int y = colInici + r.nextInt(colFi - colInici + 1);
@@ -27,7 +20,7 @@ void posarMinesQuadrant(
 }
 
 
-void generarMiness(List<List<Casella>> matrix) {
+void generarMines(List<List<Casella>> matrix) {
   // Q1: A–C, 1–5
   posarMinesQuadrant(matrix, 0, 2, 0, 4);
 
@@ -149,11 +142,11 @@ bool casellesDestapades(List<List<Casella>> matrix) {
 }
 
 void main() {
-  List<List<Casella>> matrix = List.generate(6, (i) {
+  List<List<Casella>> matrix = List.generate(6, (i) { // crea tablero
     return List.generate(10, (j) => Casella(fila: i, columna: j));
   });
 
-  generarMiness(matrix);
+  generarMines(matrix);
 
   bool esPrimeraJugada = true;
   bool jugant = true;
