@@ -41,37 +41,46 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("TITULO"),
+        title: const Text("BARGADOS DB",
+        style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.red,
+
+        
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
+          : GridView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: categories.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // columnas
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 3,
+              ),
               itemBuilder: (context, index) {
                 final category = categories[index];
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: CategoriaCard(
-                    text: category.name,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ItemsScreen(
-                            category: category.name,
-                            categoryId: category.id,
-                          ),
+                return CategoriaCard(
+                  text: category.name,
+                  logo: category.logo,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemsScreen(
+                          category: category.name,
+                          categoryId: category.id,
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
-    );
-  }
-}
+          );
+        }
+      }

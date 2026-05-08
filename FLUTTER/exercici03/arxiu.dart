@@ -5,19 +5,6 @@ import 'casella.dart';
 
 bool cheat = false;
 
-void generarMines(List<List<Casella>> matrix, int totalMines) {
-  Random r = Random();
-  int minasColocadas = 0;
-  while (minasColocadas < totalMines) {
-    int x = r.nextInt(matrix.length);
-    int y = r.nextInt(matrix[0].length);
-    if (!matrix[x][y].bomba) {
-      matrix[x][y].bomba = true;
-      minasColocadas++;
-    }
-  }
-}
-
 void posarMinesQuadrant(
   List<List<Casella>> matrix,
   int filaInici,

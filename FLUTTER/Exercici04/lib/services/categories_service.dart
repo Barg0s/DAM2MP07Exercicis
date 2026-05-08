@@ -17,4 +17,9 @@ class CategoriesService {
       throw Exception("Error loading categories");
     }
   }
+
+  
+  static String getImageUrl(String image) {
+    return "$baseUrl/images/$image";
+  }
 }
