@@ -1,17 +1,13 @@
 import 'package:exercici04/models/detail.dart';
 import 'package:flutter/material.dart';
 import '../services/details_service.dart';
-import '../widgets/detailCard.dart';
+import '../widgets/DetailCard.dart';
 
 class DetailScreen extends StatefulWidget {
   final int id;
   final String name;
 
-  const DetailScreen({
-    super.key,
-    required this.id,
-    required this.name,
-  });
+  const DetailScreen({super.key, required this.id, required this.name});
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -47,22 +43,17 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F2),
-      appBar: AppBar(
-        title: Text(widget.name),
-        backgroundColor: Colors.red,
-      ),
+      appBar: AppBar(title: Text(widget.name), backgroundColor: Colors.red),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : detail == null
-              ? const Center(
-                  child: Text("No se encontraron detalles"),
-                )
-              : Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: DetailCard(detail: detail!),
-                  ),
-                ),
+          ? const Center(child: Text("No se encontraron detalles"))
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: DetailCard(detail: detail!),
+              ),
+            ),
     );
   }
 }
