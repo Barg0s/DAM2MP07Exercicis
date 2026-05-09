@@ -2,23 +2,24 @@ import 'package:flutter/material.dart';
 
 abstract class Drawable {
   String id;
-  Drawable({required this.id});
+  Color color; // stroke color
+
+  Drawable({required this.id, required this.color});
 
   void draw(Canvas canvas);
-  Map<String, dynamic> toJson(); 
+  Map<String, dynamic> toJson();
 }
 
 class Line extends Drawable {
   Offset start;
   Offset end;
-  Color color;
   double strokeWidth;
 
   Line({
     required super.id,
+    required super.color,
     required this.start,
     required this.end,
-    this.color = Colors.black,
     this.strokeWidth = 2.0,
   });
 
@@ -26,31 +27,45 @@ class Line extends Drawable {
   void draw(Canvas canvas) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = strokeWidth;
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
     canvas.drawLine(start, end, paint);
   }
 
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'type': 'line', 'startX': start.dx, 'startY': start.dy, 'endX': end.dx, 'endY': end.dy, 'color': color.value.toRadixString(16)};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': 'line',
+        'startX': start.dx,
+        'startY': start.dy,
+        'endX': end.dx,
+        'endY': end.dy,
+        'color': color.value,
+      };
 }
 
 class Rectangle extends Drawable {
   Offset topLeft;
   Offset bottomRight;
-  Color color;
+
   double strokeWidth;
   bool fill;
+
+  Color? fillColor;
+
   String? gradientType;
   Color? gradientColor1;
   Color? gradientColor2;
 
   Rectangle({
     required super.id,
+    required super.color,
     required this.topLeft,
     required this.bottomRight,
-    this.color = Colors.black,
     this.strokeWidth = 2.0,
     this.fill = false,
+    this.fillColor,
     this.gradientType,
     this.gradientColor1,
     this.gradientColor2,
@@ -60,7 +75,6 @@ class Rectangle extends Drawable {
   void draw(Canvas canvas) {
     final rect = Rect.fromPoints(topLeft, bottomRight);
 
-    // FILL
     if (fill) {
       final fillPaint = Paint()..style = PaintingStyle.fill;
 
@@ -68,16 +82,17 @@ class Rectangle extends Drawable {
           gradientColor1 != null &&
           gradientColor2 != null) {
         fillPaint.shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [gradientColor1!, gradientColor2!],
         ).createShader(rect);
       } else {
-        fillPaint.color = color;
+        fillPaint.color = fillColor ?? color;
       }
 
       canvas.drawRect(rect, fillPaint);
     }
 
-    // STROKE (SIEMPRE ENCIMA)
     final strokePaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
@@ -87,26 +102,37 @@ class Rectangle extends Drawable {
   }
 
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'type': 'rectangle', 'topLeftX': topLeft.dx, 'topLeftY': topLeft.dy, 'bottomRightX': bottomRight.dx, 'bottomRightY': bottomRight.dy};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': 'rectangle',
+        'topLeftX': topLeft.dx,
+        'topLeftY': topLeft.dy,
+        'bottomRightX': bottomRight.dx,
+        'bottomRightY': bottomRight.dy,
+      };
 }
 
 class Circle extends Drawable {
   Offset center;
   double radius;
-  Color color;
+
   double strokeWidth;
   bool fill;
+
+  Color? fillColor;
+
   String? gradientType;
   Color? gradientColor1;
   Color? gradientColor2;
 
   Circle({
     required super.id,
+    required super.color,
     required this.center,
     required this.radius,
-    this.color = Colors.black,
     this.strokeWidth = 2.0,
     this.fill = false,
+    this.fillColor,
     this.gradientType,
     this.gradientColor1,
     this.gradientColor2,
@@ -116,7 +142,6 @@ class Circle extends Drawable {
   void draw(Canvas canvas) {
     final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // FILL
     if (fill) {
       final fillPaint = Paint()..style = PaintingStyle.fill;
 
@@ -124,22 +149,25 @@ class Circle extends Drawable {
           gradientColor1 != null &&
           gradientColor2 != null) {
         fillPaint.shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [gradientColor1!, gradientColor2!],
         ).createShader(rect);
       } else if (gradientType == 'radial' &&
           gradientColor1 != null &&
           gradientColor2 != null) {
         fillPaint.shader = RadialGradient(
+          center: Alignment.center,
+          radius: 1.0,
           colors: [gradientColor1!, gradientColor2!],
         ).createShader(rect);
       } else {
-        fillPaint.color = color;
+        fillPaint.color = fillColor ?? color;
       }
 
       canvas.drawCircle(center, radius, fillPaint);
     }
 
-    // STROKE (SIEMPRE)
     final strokePaint = Paint()
       ..color = color
       ..strokeWidth = strokeWidth
@@ -149,13 +177,19 @@ class Circle extends Drawable {
   }
 
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'type': 'circle', 'x': center.dx, 'y': center.dy, 'radius': radius};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': 'circle',
+        'x': center.dx,
+        'y': center.dy,
+        'radius': radius,
+      };
 }
 
 class TextElement extends Drawable {
   String text;
   Offset position;
-  Color color;
+
   double fontSize;
   String fontFamily;
   bool isBold;
@@ -165,7 +199,7 @@ class TextElement extends Drawable {
     required super.id,
     required this.text,
     required this.position,
-    this.color = Colors.black,
+    required super.color,
     this.fontSize = 14.0,
     this.fontFamily = 'monospace',
     this.isBold = false,
@@ -181,12 +215,24 @@ class TextElement extends Drawable {
       fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
       fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
     );
+
     final textSpan = TextSpan(text: text, style: textStyle);
-    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+
     textPainter.layout();
     textPainter.paint(canvas, position);
   }
 
   @override
-  Map<String, dynamic> toJson() => {'id': id, 'type': 'text', 'text': text, 'x': position.dx, 'y': position.dy};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': 'text',
+        'text': text,
+        'x': position.dx,
+        'y': position.dy,
+        'color': color.value,
+      };
 }

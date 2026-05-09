@@ -60,7 +60,6 @@ class AppData extends ChangeNotifier {
     return min + Random().nextDouble() * (max - min);
   }
 
-  // --- CRIDA A LA IA ---
   Future<void> callWithCustomTools({required String userPrompt}) async {
     const apiUrl = 'http://localhost:11434/api/chat';
 
@@ -134,108 +133,183 @@ class AppData extends ChangeNotifier {
   // --- PROCESSAR EINES  ---
 
 void _processFunctionCall(Map<String, dynamic> functionCall) {
-    final name = functionCall['name'];
-    final parameters = functionCall['arguments'] ?? {};
+  final name = functionCall['name'];
+  final parameters = functionCall['arguments'] ?? {};
 
-    // Paràmetres comuns per a totes les figures
-    final String newId = DateTime.now().millisecondsSinceEpoch.toString(); // Generar ID único
-    final color = parseColor(parameters['color'] ?? parameters['fillColor']); // Fallback al fillColor si es només emplenat
-    final strokeWidth = parameters['thickness'] != null ? parseDouble(parameters['thickness']) : 2.0;
-    final fill = parseBool(parameters['fill']);
-    
-    // Paràmetres Fase 1
-    final gradientType = parameters['gradientType'];
-    final gradientColor1 = parameters['gradientColor1'] != null ? parseColor(parameters['gradientColor1']) : null;
-    final gradientColor2 = parameters['gradientColor2'] != null ? parseColor(parameters['gradientColor2']) : null;
+  final String newId = "${name}_${DateTime.now().microsecondsSinceEpoch}";
 
-    switch (name) {
-      case 'draw_circle':
-        final x = parameters['x'] != null ? parseDouble(parameters['x']) : _randomBetween(10.0, 390.0);
-        final y = parameters['y'] != null ? parseDouble(parameters['y']) : _randomBetween(10.0, 490.0);
-        final radius = parameters['radius'] != null ? parseDouble(parameters['radius']) : _randomBetween(10.0, 25.0);
-        
-        addDrawable(Circle(
-          id: newId, center: Offset(x, y), radius: max(0.0, radius), color: color,
-          strokeWidth: strokeWidth, fill: fill, gradientType: gradientType,
-          gradientColor1: gradientColor1, gradientColor2: gradientColor2,
+  final strokeWidth = parameters['thickness'] != null
+      ? parseDouble(parameters['thickness'])
+      : 2.0;
+
+  final fill = parseBool(parameters['fill']);
+
+  final strokeColor = parseColor(parameters['color']);
+  final fillColor = parameters['fillColor'] != null
+      ? parseColor(parameters['fillColor'])
+      : Colors.transparent;
+
+  final gradientType = parameters['gradientType'];
+  final gradientColor1 = parameters['gradientColor1'] != null
+      ? parseColor(parameters['gradientColor1'])
+      : null;
+  final gradientColor2 = parameters['gradientColor2'] != null
+      ? parseColor(parameters['gradientColor2'])
+      : null;
+
+  switch (name) {
+    case 'draw_circle':
+      final x = parameters['x'] != null
+          ? parseDouble(parameters['x'])
+          : _randomBetween(10.0, 390.0);
+
+      final y = parameters['y'] != null
+          ? parseDouble(parameters['y'])
+          : _randomBetween(10.0, 490.0);
+
+      final radius = parameters['radius'] != null
+          ? parseDouble(parameters['radius'])
+          : _randomBetween(10.0, 25.0);
+
+      addDrawable(Circle(
+        id: newId,
+        center: Offset(x, y),
+        radius: max(0.0, radius),
+        color: strokeColor,
+        fillColor: fillColor,
+        strokeWidth: strokeWidth,
+        fill: fill,
+        gradientType: gradientType,
+        gradientColor1: gradientColor1,
+        gradientColor2: gradientColor2,
+      ));
+      break;
+
+    case 'draw_line':
+      final startX = parameters['startX'] != null
+          ? parseDouble(parameters['startX'])
+          : _randomBetween(10.0, 390.0);
+
+      final startY = parameters['startY'] != null
+          ? parseDouble(parameters['startY'])
+          : _randomBetween(10.0, 490.0);
+
+      final endX = parameters['endX'] != null
+          ? parseDouble(parameters['endX'])
+          : _randomBetween(10.0, 390.0);
+
+      final endY = parameters['endY'] != null
+          ? parseDouble(parameters['endY'])
+          : _randomBetween(10.0, 490.0);
+
+      addDrawable(Line(
+        id: newId,
+        start: Offset(startX, startY),
+        end: Offset(endX, endY),
+        color: strokeColor,
+        strokeWidth: strokeWidth,
+      ));
+      break;
+
+    case 'draw_rectangle':
+      if (parameters['topLeftX'] != null &&
+          parameters['topLeftY'] != null &&
+          parameters['bottomRightX'] != null &&
+          parameters['bottomRightY'] != null) {
+        addDrawable(Rectangle(
+          id: newId,
+          topLeft: Offset(
+            parseDouble(parameters['topLeftX']),
+            parseDouble(parameters['topLeftY']),
+          ),
+          bottomRight: Offset(
+            parseDouble(parameters['bottomRightX']),
+            parseDouble(parameters['bottomRightY']),
+          ),
+          color: strokeColor,
+          fillColor: fillColor,
+          strokeWidth: strokeWidth,
+          fill: fill,
+          gradientType: gradientType,
+          gradientColor1: gradientColor1,
+          gradientColor2: gradientColor2,
         ));
-        break;
+      }
+      break;
 
-      case 'draw_line':
-        final startX = parameters['startX'] != null ? parseDouble(parameters['startX']) : _randomBetween(10.0, 390.0);
-        final startY = parameters['startY'] != null ? parseDouble(parameters['startY']) : _randomBetween(10.0, 490.0);
-        final endX = parameters['endX'] != null ? parseDouble(parameters['endX']) : _randomBetween(10.0, 390.0);
-        final endY = parameters['endY'] != null ? parseDouble(parameters['endY']) : _randomBetween(10.0, 490.0);
-        
-        addDrawable(Line(
-          id: newId, start: Offset(startX, startY), end: Offset(endX, endY), color: color, strokeWidth: strokeWidth
-        ));
-        break;
+    case 'draw_text':
+      final text = parameters['text'] ?? "Text IA";
 
-      case 'draw_rectangle':
-        if (parameters['topLeftX'] != null && parameters['topLeftY'] != null &&
-            parameters['bottomRightX'] != null && parameters['bottomRightY'] != null) {
-          addDrawable(Rectangle(
-              id: newId,
-              topLeft: Offset(parseDouble(parameters['topLeftX']), parseDouble(parameters['topLeftY'])),
-              bottomRight: Offset(parseDouble(parameters['bottomRightX']), parseDouble(parameters['bottomRightY'])),
-              color: color, strokeWidth: strokeWidth, fill: fill, gradientType: gradientType,
-              gradientColor1: gradientColor1, gradientColor2: gradientColor2,
-          ));
+      final x = parameters['x'] != null
+          ? parseDouble(parameters['x'])
+          : 50.0;
+
+      final y = parameters['y'] != null
+          ? parseDouble(parameters['y'])
+          : 50.0;
+
+      addDrawable(TextElement(
+        id: newId,
+        text: text,
+        position: Offset(x, y),
+        color: strokeColor,
+        fontSize: parameters['fontSize'] != null
+            ? parseDouble(parameters['fontSize'])
+            : 14.0,
+        fontFamily: parameters['fontFamily'] ?? 'monospace',
+        isBold: parseBool(parameters['isBold']),
+        isItalic: parseBool(parameters['isItalic']),
+      ));
+      break;
+
+    case 'delete_shape':
+      final idToRemove = parameters['id'];
+      drawables.removeWhere((d) => d.id == idToRemove);
+      _responseText = "Figura esborrada.";
+      break;
+
+    case 'modify_shape':
+      final idToModify = parameters['id'];
+      final index = drawables.indexWhere((d) => d.id == idToModify);
+
+      if (index != -1) {
+        final shape = drawables[index];
+
+        if (parameters['color'] != null) {
+          shape.color = parseColor(parameters['color']);
         }
-        break;
 
-      case 'draw_text':
-        final text = parameters['text'] ?? "Text IA";
-        final x = parameters['x'] != null ? parseDouble(parameters['x']) : 50.0;
-        final y = parameters['y'] != null ? parseDouble(parameters['y']) : 50.0;
-        
-        addDrawable(TextElement(
-          id: newId, text: text, position: Offset(x, y), color: color,
-          fontSize: parameters['fontSize'] != null ? parseDouble(parameters['fontSize']) : 14.0,
-          fontFamily: parameters['fontFamily'] ?? 'monospace',
-          isBold: parseBool(parameters['isBold']),
-          isItalic: parseBool(parameters['isItalic'])
-        ));
-        break;
-
-      case 'delete_shape':
-        final idToRemove = parameters['id'];
-        drawables.removeWhere((d) => d.id == idToRemove);
-        _responseText = "Figura esborrada.";
-        break;
-
-      case 'modify_shape':
-        final idToModify = parameters['id'];
-        final index = drawables.indexWhere((d) => d.id == idToModify);
-        if (index != -1) {
-          final shape = drawables[index];
-          if (parameters['color'] != null || parameters['fillColor'] != null) {
-             Color newColor = parseColor(parameters['color'] ?? parameters['fillColor']);
-             if (shape is Circle) shape.color = newColor;
-             if (shape is Rectangle) shape.color = newColor;
-             if (shape is Line) shape.color = newColor;
-             if (shape is TextElement) shape.color = newColor;
-          }
-          if (shape is Circle) {
-             if (parameters['radius'] != null) shape.radius = parseDouble(parameters['radius']);
-             if (parameters['x'] != null || parameters['y'] != null) {
-                 shape.center = Offset(
-                    parameters['x'] != null ? parseDouble(parameters['x']) : shape.center.dx,
-                    parameters['y'] != null ? parseDouble(parameters['y']) : shape.center.dy
-                 );
-             }
-          }
-          _responseText = "Figura modificada.";
+        if (shape is Rectangle && parameters['fillColor'] != null) {
+          shape.fillColor = parseColor(parameters['fillColor']);
         }
-        break;
 
-      default:
-        _responseText = "La IA ha intentat una funció desconeguda: $name";
-    }
-    notifyListeners();
+        if (shape is Circle) {
+          if (parameters['radius'] != null) {
+            shape.radius = parseDouble(parameters['radius']);
+          }
+
+          if (parameters['x'] != null || parameters['y'] != null) {
+            shape.center = Offset(
+              parameters['x'] != null
+                  ? parseDouble(parameters['x'])
+                  : shape.center.dx,
+              parameters['y'] != null
+                  ? parseDouble(parameters['y'])
+                  : shape.center.dy,
+            );
+          }
+        }
+
+        _responseText = "Figura modificada.";
+      }
+      break;
+
+    default:
+      _responseText = "Funció desconeguda: $name";
   }
 
+  notifyListeners();
+}
   void cancelRequests() {
     _responseText += "\nRequest cancelled.";
     setLoading(false);
