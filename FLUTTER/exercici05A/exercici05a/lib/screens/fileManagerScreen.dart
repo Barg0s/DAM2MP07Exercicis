@@ -12,10 +12,10 @@ import '../services/sshService.dart';
 import '../services/fileService.dart';
 import '../models/serverModel.dart';
 
-// --- CONTEXTO DE RUTA LINUX ---
+// --- CONTEXTO DE RUTA LINUX (Evita el error de las barras \ en Windows) ---
 final linuxPath = p.Context(style: p.Style.posix);
 
-// --- WIDGET PERSONALIZADO 1: CÍRCULO CANVAS ---
+// --- WIDGET PERSONALIZADO: CÍRCULO CANVAS (Requisito Enunciado) ---
 class StatusCanvasIndicator extends StatelessWidget {
   final bool isOnline;
   final double size;
@@ -44,74 +44,6 @@ class _StatusPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// --- WIDGET PERSONALIZADO 2: CAMP DE TEXT ---
-class CustomTextFieldWidget extends StatelessWidget {
-  final String title;
-  final TextEditingController controller;
-  const CustomTextFieldWidget({super.key, required this.title, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        const SizedBox(height: 8),
-        TextField(controller: controller, decoration: const InputDecoration(border: OutlineInputBorder())),
-      ],
-    );
-  }
-}
-
-// --- WIDGET PERSONALIZADO 3: PINTOR DE DISCO (DONUT CHART) ---
-// (Este es el que me has pasado tú, ajustado mínimamente)
-class DiskUsagePainter extends CustomPainter {
-  final Map<String, int> folderSizes;
-
-  DiskUsagePainter(this.folderSizes);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (folderSizes.isEmpty) return;
-
-    final double totalSize = folderSizes.values.fold(0, (sum, item) => sum + item);
-    if (totalSize == 0) return; // Evitamos división por cero si la carpeta pesa 0 bytes
-
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = min(size.width, size.height) / 2;
-
-    double startAngle = 0;
-    final List<Color> colors = [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple];
-
-    int i = 0;
-    folderSizes.forEach((name, bytes) {
-      final sweepAngle = (bytes / totalSize) * 2 * pi;
-      final paint = Paint()
-        ..color = colors[i % colors.length]
-        ..style = PaintingStyle.fill;
-
-      // Dibujamos el arco proporcional al tamaño
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        true,
-        paint,
-      );
-
-      startAngle += sweepAngle;
-      i++;
-    });
-
-    // Dibujar un círculo blanco en el centro para estilo "Donut"
-    canvas.drawCircle(center, radius * 0.4, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
 // --- PANTALLA PRINCIPAL ---
 class FileManagerScreen extends StatefulWidget {
   final String initialPath;
@@ -121,6 +53,7 @@ class FileManagerScreen extends StatefulWidget {
   @override
   State<FileManagerScreen> createState() => _FileManagerScreenState();
 }
+
 
 class _FileManagerScreenState extends State<FileManagerScreen> {
   late FileService _fileService;
@@ -141,15 +74,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _refreshFiles();
   }
 
-  // --- MÉTODO RUNCOMMAND INTEGRADO ---
-  Future<String> _runCommand(String command) async {
-    final session = await widget.sshService.client.execute(command);
-    final stdout = await utf8.decodeStream(session.stdout);
-    await session.done;
-    return stdout;
-  }
-
-  // --- NAVEGACIÓN ---
+  // --- NAVEGACIÓN (Forzando Estilo Linux) ---
   void _navigateTo(String name) {
     if (name == "..") {
       if (_currentPath == widget.initialPath || _currentPath == "/") return;
@@ -164,8 +89,9 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   Future<void> _checkServerStatus() async {
     String cmd = _serverType == ServerType.nodejs ? "pgrep -f node" : "pgrep -f java";
     try {
-      final output = await _runCommand(cmd);
-      if (mounted) setState(() => _isServerRunning = output.trim().isNotEmpty);
+      final result = await widget.sshService.client.run(cmd);
+      final output = utf8.decode(result).trim();
+      if (mounted) setState(() => _isServerRunning = output.isNotEmpty);
     } catch (e) {
       if (mounted) setState(() => _isServerRunning = false);
     }
@@ -173,20 +99,27 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
 
   Future<void> _handleServerAction(String action) async {
     showDialog(
-      context: context, barrierDismissible: false,
-      builder: (c) => const AlertDialog(content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text("Processant...")])),
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => const AlertDialog(
+        content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text("Processant...")]),
+      ),
     );
 
     try {
       String cmd = "";
       if (_serverType == ServerType.nodejs) {
-        cmd = (action == 'start') ? "cd '$_currentPath' && nohup npm start > /dev/null 2>&1 &" : "pkill -f node";
+        cmd = (action == 'start') 
+            ? "cd '$_currentPath' && nohup npm start > /dev/null 2>&1 &" 
+            : "pkill -f node";
       } else {
-        cmd = (action == 'start') ? "cd '$_currentPath' && nohup java -jar *.jar > /dev/null 2>&1 &" : "pkill -f java";
+        cmd = (action == 'start') 
+            ? "cd '$_currentPath' && nohup java -jar *.jar > /dev/null 2>&1 &" 
+            : "pkill -f java";
       }
 
-      await _runCommand(cmd);
-      await Future.delayed(const Duration(seconds: 3)); 
+      await widget.sshService.client.run(cmd);
+      await Future.delayed(const Duration(seconds: 3)); // Espera para que Linux registre el proceso
       await _checkServerStatus();
 
       if (mounted) Navigator.pop(context);
@@ -236,7 +169,8 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      String raw = await _runCommand("ls -la '$_currentPath'");
+      var bytes = await widget.sshService.client.run("ls -ll '$_currentPath'");
+      String raw = utf8.decode(bytes);
       final lines = raw.split('\n');
       List<Map<String, dynamic>> temp = [];
 
@@ -267,75 +201,21 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       final sftp = await widget.sshService.client.sftp();
       final remote = await sftp.open(linuxPath.join(_currentPath, name), mode: SftpFileOpenMode.create | SftpFileOpenMode.write);
       await remote.write(local.openRead().cast());
-      
-      if (name.endsWith('.zip')) await _runCommand("cd '$_currentPath' && unzip -o '$name'");
+      if (name.endsWith('.zip')) await widget.sshService.client.run("cd '$_currentPath' && unzip -o '$name'");
       _refreshFiles();
     }
   }
 
-  // --- ACCIONES SECUNDARIAS (RENAME, INFO, DELETE, BAOBAB/DONUT) ---
   void _showFileActions(Map<String, dynamic> item) {
     showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Wrap(children: [
-      ListTile(leading: const Icon(Icons.info_outline), title: const Text("Informació"), onTap: () { Navigator.pop(ctx); _showInfo(item); }),
-      ListTile(leading: const Icon(Icons.edit), title: const Text("Reanomenar"), onTap: () { Navigator.pop(ctx); _renameItem(item['name']); }),
       ListTile(leading: const Icon(Icons.download), title: const Text("Descarregar"), onTap: () { Navigator.pop(ctx); _downloadFile(item['name']); }),
       ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text("Esborrar"), onTap: () { Navigator.pop(ctx); _deleteItem(item['name']); }),
     ])));
   }
 
-  void _showInfo(Map<String, dynamic> item) {
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text(item['name']),
-      content: Text("Permisos: ${item['permissions']}\nPropietari: ${item['owner']}\nMida: ${item['size']} B"),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Tancar"))]
-    ));
-  }
-
-  Future<void> _renameItem(String oldName) async {
-    TextEditingController c = TextEditingController(text: oldName);
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      content: CustomTextFieldWidget(title: "Nou nom", controller: c), 
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancela")),
-        TextButton(onPressed: () async {
-          Navigator.pop(ctx);
-          await _runCommand("mv '${linuxPath.join(_currentPath, oldName)}' '${linuxPath.join(_currentPath, c.text)}'");
-          _refreshFiles();
-        }, child: const Text("Ok")),
-      ]
-    ));
-  }
-
   Future<void> _deleteItem(String name) async {
-    await _runCommand("rm -rf '${linuxPath.join(_currentPath, name)}'");
+    await widget.sshService.client.run("rm -rf '${linuxPath.join(_currentPath, name)}'");
     _refreshFiles();
-  }
-
-  // MÉTODO ADAPTADO PARA USAR TU MAP<String, int>
-  void _showDiskUsageDonut() {
-    Map<String, int> fileSizes = {};
-    for (var item in _items) {
-      if (!item['isDirectory']) {
-        int size = int.tryParse(item['size'].toString()) ?? 0;
-        if (size > 0) fileSizes[item['name']] = size;
-      }
-    }
-
-    if (fileSizes.isEmpty) {
-      _showSnackBar("No hi ha arxius amb mida suficient per mostrar el gràfic");
-      return;
-    }
-
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: const Text("Ús de disc (Donut)"),
-      content: SizedBox(
-        height: 250, width: 250,
-        child: CustomPaint(painter: DiskUsagePainter(fileSizes)), // <--- TU PINTOR AQUÍ
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Tancar"))
-      ]
-    ));
   }
 
   void _showSnackBar(String m, {bool isError = false}) {
@@ -351,10 +231,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
         appBar: AppBar(
           leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => _currentPath == widget.initialPath ? Navigator.pop(context) : _navigateTo("..")),
           title: Text(_currentPath, style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
-          actions: [
-            IconButton(icon: const Icon(Icons.pie_chart), onPressed: _showDiskUsageDonut), // <--- BOTÓN ACTUALIZADO
-            IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles)
-          ],
+          actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles)],
         ),
         body: Column(children: [
           if (_serverType != ServerType.generic)
