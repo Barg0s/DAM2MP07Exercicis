@@ -149,15 +149,26 @@ void _processFunctionCall(Map<String, dynamic> functionCall) {
       ? parseColor(parameters['fillColor'])
       : Colors.transparent;
 
-  final gradientType = parameters['gradientType'];
-  final gradientColor1 = parameters['gradientColor1'] != null
+  // 🔥 FIX GRADIENT (IMPORTANTE)
+  String? gradientType = parameters['gradientType']
+      ?.toString()
+      .trim()
+      .toLowerCase();
+
+  if (gradientType != 'linear' && gradientType != 'radial') {
+    gradientType = null;
+  }
+
+  Color? gradientColor1 = parameters['gradientColor1'] != null
       ? parseColor(parameters['gradientColor1'])
       : null;
-  final gradientColor2 = parameters['gradientColor2'] != null
+
+  Color? gradientColor2 = parameters['gradientColor2'] != null
       ? parseColor(parameters['gradientColor2'])
       : null;
 
   switch (name) {
+
     case 'draw_circle':
       final x = parameters['x'] != null
           ? parseDouble(parameters['x'])
@@ -174,7 +185,7 @@ void _processFunctionCall(Map<String, dynamic> functionCall) {
       addDrawable(Circle(
         id: newId,
         center: Offset(x, y),
-        radius: max(0.0, radius),
+        radius: radius < 0 ? 0 : radius,
         color: strokeColor,
         fillColor: fillColor,
         strokeWidth: strokeWidth,
@@ -216,6 +227,7 @@ void _processFunctionCall(Map<String, dynamic> functionCall) {
           parameters['topLeftY'] != null &&
           parameters['bottomRightX'] != null &&
           parameters['bottomRightY'] != null) {
+
         addDrawable(Rectangle(
           id: newId,
           topLeft: Offset(
@@ -288,19 +300,18 @@ void _processFunctionCall(Map<String, dynamic> functionCall) {
             shape.radius = parseDouble(parameters['radius']);
           }
 
-          if (parameters['x'] != null || parameters['y'] != null) {
-            shape.center = Offset(
-              parameters['x'] != null
-                  ? parseDouble(parameters['x'])
-                  : shape.center.dx,
-              parameters['y'] != null
-                  ? parseDouble(parameters['y'])
-                  : shape.center.dy,
-            );
-          }
+          shape.center = Offset(
+            parameters['x'] != null
+                ? parseDouble(parameters['x'])
+                : shape.center.dx,
+            parameters['y'] != null
+                ? parseDouble(parameters['y'])
+                : shape.center.dy,
+          );
         }
 
         _responseText = "Figura modificada.";
+        notifyListeners();
       }
       break;
 

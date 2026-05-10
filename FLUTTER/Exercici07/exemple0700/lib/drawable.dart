@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 
+String colorToHex(Color c) {
+  return '#'
+      '${c.alpha.toRadixString(16).padLeft(2, '0')}'
+      '${c.red.toRadixString(16).padLeft(2, '0')}'
+      '${c.green.toRadixString(16).padLeft(2, '0')}'
+      '${c.blue.toRadixString(16).padLeft(2, '0')}'
+      .toUpperCase();
+}
+
 abstract class Drawable {
   String id;
-  Color color; // stroke color
+  Color color;
 
-  Drawable({required this.id, required this.color});
+  Drawable({
+    required this.id,
+    required this.color,
+  });
 
   void draw(Canvas canvas);
+
   Map<String, dynamic> toJson();
 }
 
@@ -41,7 +54,8 @@ class Line extends Drawable {
         'startY': start.dy,
         'endX': end.dx,
         'endY': end.dy,
-        'color': color.value,
+        'color': colorToHex(color),
+        'strokeWidth': strokeWidth,
       };
 }
 
@@ -76,21 +90,27 @@ class Rectangle extends Drawable {
     final rect = Rect.fromPoints(topLeft, bottomRight);
 
     if (fill) {
-    final paint = Paint()..style = PaintingStyle.fill;
+      final paint = Paint()..style = PaintingStyle.fill;
 
-    if (gradientType == 'linear' &&
-        gradientColor1 != null &&
-        gradientColor2 != null) {
-
-      paint.shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [gradientColor1!, gradientColor2!],
-      ).createShader(rect);
-
-    } else {
-      paint.color = fillColor ?? color;
-    }
+      if (gradientType == 'linear' &&
+          gradientColor1 != null &&
+          gradientColor2 != null) {
+        paint.shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [gradientColor1!, gradientColor2!],
+        ).createShader(rect);
+      } else if (gradientType == 'radial' &&
+          gradientColor1 != null &&
+          gradientColor2 != null) {
+        paint.shader = RadialGradient(
+          center: Alignment.center,
+          radius: 1.0,
+          colors: [gradientColor1!, gradientColor2!],
+        ).createShader(rect);
+      } else {
+        paint.color = fillColor ?? color;
+      }
 
       canvas.drawRect(rect, paint);
     }
@@ -111,6 +131,18 @@ class Rectangle extends Drawable {
         'topLeftY': topLeft.dy,
         'bottomRightX': bottomRight.dx,
         'bottomRightY': bottomRight.dy,
+        'color': colorToHex(color),
+        'strokeWidth': strokeWidth,
+        'fill': fill,
+        'fillColor':
+            fillColor != null ? colorToHex(fillColor!) : null,
+        'gradientType': gradientType,
+        'gradientColor1': gradientColor1 != null
+            ? colorToHex(gradientColor1!)
+            : null,
+        'gradientColor2': gradientColor2 != null
+            ? colorToHex(gradientColor2!)
+            : null,
       };
 }
 
@@ -142,10 +174,14 @@ class Circle extends Drawable {
 
   @override
   void draw(Canvas canvas) {
-    final rect = Rect.fromCircle(center: center, radius: radius);
+    final rect = Rect.fromCircle(
+      center: center,
+      radius: radius,
+    );
 
     if (fill) {
-      final fillPaint = Paint()..style = PaintingStyle.fill;
+      final fillPaint = Paint()
+        ..style = PaintingStyle.fill;
 
       if (gradientType == 'linear' &&
           gradientColor1 != null &&
@@ -185,6 +221,18 @@ class Circle extends Drawable {
         'x': center.dx,
         'y': center.dy,
         'radius': radius,
+        'color': colorToHex(color),
+        'strokeWidth': strokeWidth,
+        'fill': fill,
+        'fillColor':
+            fillColor != null ? colorToHex(fillColor!) : null,
+        'gradientType': gradientType,
+        'gradientColor1': gradientColor1 != null
+            ? colorToHex(gradientColor1!)
+            : null,
+        'gradientColor2': gradientColor2 != null
+            ? colorToHex(gradientColor2!)
+            : null,
       };
 }
 
@@ -214,17 +262,24 @@ class TextElement extends Drawable {
       color: color,
       fontSize: fontSize,
       fontFamily: fontFamily,
-      fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-      fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+      fontWeight:
+          isBold ? FontWeight.bold : FontWeight.normal,
+      fontStyle:
+          isItalic ? FontStyle.italic : FontStyle.normal,
     );
 
-    final textSpan = TextSpan(text: text, style: textStyle);
+    final textSpan = TextSpan(
+      text: text,
+      style: textStyle,
+    );
+
     final textPainter = TextPainter(
       text: textSpan,
       textDirection: TextDirection.ltr,
     );
 
     textPainter.layout();
+
     textPainter.paint(canvas, position);
   }
 
@@ -235,6 +290,10 @@ class TextElement extends Drawable {
         'text': text,
         'x': position.dx,
         'y': position.dy,
-        'color': color,
+        'color': colorToHex(color),
+        'fontSize': fontSize,
+        'fontFamily': fontFamily,
+        'isBold': isBold,
+        'isItalic': isItalic,
       };
 }
