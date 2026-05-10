@@ -1,8 +1,13 @@
 // lib/screens/file_manager_screen.dart
 import 'package:flutter/material.dart';
+import 'dart:math';
+import 'dart:convert'; // NECESARIO PARA utf8.decode()
 import '../services/sshService.dart';
 import '../services/fileService.dart';
 import '../models/serverModel.dart';
+import '../models/fileModel.dart';
+// --- MODELO DE DATOS PARA EL BAOBAB ---
+
 
 class FileManagerScreen extends StatefulWidget {
   final String initialPath;
@@ -33,38 +38,44 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _refreshFiles();
   }
 
-  // Carga archivos y detecta si hay un servidor (Node/Java)
-Future<void> _refreshFiles() async {
+  Future<void> _refreshFiles() async {
+  if (!mounted) return;
   setState(() => _isLoading = true);
+  
   try {
-    // 1. Obtenemos el listado mediante SSH
-    // Usamos -la para ver todo, pero el parsing filtrará la basura
     String rawList = await _fileService.list(_currentPath);
-    
-    print("--- DEBUG: BRUTO RECIBIDO ---");
-    print(rawList);
-
     final lines = rawList.split('\n');
     List<Map<String, dynamic>> tempItems = [];
 
     for (var line in lines) {
       String l = line.trim();
-
-      // FILTRO CRÍTICO: 
-      // Si la línea no empieza por 'd' (directorio) o '-' (archivo), es BASURA.
-      // Esto eliminará los mensajes de error "ls: cannot access..." y las horas sueltas.
-      if (!l.startsWith('d') && !l.startsWith('-')) {
-        continue;
-      }
+      
+      // 1. FILTRO DE SEGURIDAD: Solo líneas que empiecen por 'd' o '-'
+      if (!l.startsWith('d') && !l.startsWith('-')) continue;
 
       final parts = l.split(RegExp(r'\s+'));
 
-      // En un 'ls -l' de Linux, el nombre real empieza en el índice 8.
       if (parts.length >= 9) {
-        // Unimos el resto por si el nombre tiene espacios (ej: "Mi Proyecto.zip")
-          final String name = parts.last;
+        // 2. BUSCAR EL ÍNDICE DE LA HORA (ej. 15:42)
+        int horaIndex = -1;
+        for (int i = 0; i < parts.length; i++) {
+          if (parts[i].contains(':')) {
+            horaIndex = i;
+            break;
+          }
+        }
 
-        // Ignoramos los punteros al mismo directorio
+        String name = "";
+        // 3. SI ENCONTRAMOS LA HORA: El nombre empieza en la siguiente posición
+        if (horaIndex != -1 && horaIndex + 1 < parts.length) {
+          name = parts.sublist(horaIndex + 1).join(' ');
+        } else {
+          // Si no hay ':' (porque es un archivo viejo y sale el año), suele ser el índice 8
+          name = parts.sublist(8).join(' ');
+        }
+
+        // Limpiar espacios y filtrar carpetas del sistema
+        name = name.trim();
         if (name == '.' || name == '..') continue;
 
         tempItems.add({
@@ -77,44 +88,108 @@ Future<void> _refreshFiles() async {
       }
     }
 
-    // 2. DETECCIÓN DE PROYECTO
-    // Esto es lo que hace tu amigo: detectar si hay package.json o .jar
     final type = await _fileService.detectServerType(_currentPath);
 
+    if (!mounted) return;
     setState(() {
       _items = tempItems;
       _serverType = type;
       _isLoading = false;
     });
-    
-    print("DEBUG: Lista procesada con ${_items.length} elementos. Tipo: $_serverType");
-
   } catch (e) {
+    if (!mounted) return;
     setState(() => _isLoading = false);
-    print("ERROR EN REFRESH: $e");
-    _showSnackBar("Error de llistat: $e", isError: true);
+    _showSnackBar("Error: $e", isError: true);
   }
 }
-  // Gestión de procesos START / STOP
+  // --- LÓGICA DEL BAOBAB CON SOLUCIÓN A Uint8List ---
+  void _mostrarBaobab() async {
+    setState(() => _isLoading = true);
+    try {
+      // 1. Ejecutar comando (obtenemos bytes)
+      var bytes = await widget.sshService.client.run("cd $_currentPath && du -sb *");
+      
+      // 2. Decodificar bytes a String
+      String raw = utf8.decode(bytes);
+      
+      List<FileModel> carpetas = [];
+      final lines = raw.trim().split('\n');
+      
+      for (var line in lines) {
+        final parts = line.split(RegExp(r'\s+'));
+        if (parts.length >= 2) {
+          carpetas.add(FileModel(
+            name: parts[1],
+            size: int.parse(parts[0]),
+            path: "$_currentPath/${parts[1]}",
+            isDirectory: true,
+          ));
+        }
+      }
+
+      carpetas.sort((a, b) => b.size.compareTo(a.size));
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+      _abrirDialogoGrafico(carpetas);
+
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar("Error en Baobab: $e", isError: true);
+    }
+  }
+
+  void _abrirDialogoGrafico(List<FileModel> datos) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Analitzador d'espai"),
+        content: SizedBox(
+          width: 400,
+          height: 450,
+          child: Column(
+            children: [
+              Expanded(
+                child: CustomPaint(
+                  painter: DiskUsagePainter({for (var f in datos) f.name: f.size}),
+                  size: const Size(200, 200),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text("Top 5 elements més pesats:", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Divider(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: datos.length > 5 ? 5 : datos.length,
+                  itemBuilder: (context, i) => ListTile(
+                    dense: true,
+                    leading: Icon(Icons.circle, color: _getColors()[i % _getColors().length], size: 12),
+                    title: Text(datos[i].name, style: const TextStyle(fontSize: 12)),
+                    trailing: Text("${(datos[i].size / 1024).toStringAsFixed(1)} KB"),
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("TANCAR"))],
+      ),
+    );
+  }
+
   Future<void> _handleServerAction(String action) async {
     String command = '';
-    String projectName = _currentPath.split('/').last;
-
     if (_serverType == ServerType.nodejs) {
-      command = action == 'start' 
-          ? 'cd $_currentPath && npm start &' 
-          : 'pkill -f "$projectName"';
+      command = action == 'start' ? 'cd $_currentPath && npm start &' : 'pkill -f node';
     } else if (_serverType == ServerType.java) {
-      command = action == 'start' 
-          ? 'cd $_currentPath && java -jar *.jar &' 
-          : 'pkill -f "java"';
+      command = action == 'start' ? 'cd $_currentPath && java -jar *.jar &' : 'pkill -f java';
     }
 
     try {
       await widget.sshService.client.run(command);
-      _showSnackBar("Comando ${action.toUpperCase()} enviat a $projectName");
+      _showSnackBar("Acció $action executada");
     } catch (e) {
-      _showSnackBar("Error en l'operació: $e", isError: true);
+      _showSnackBar("Error SSH: $e", isError: true);
     }
   }
 
@@ -139,50 +214,31 @@ Future<void> _refreshFiles() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentPath, style: const TextStyle(fontSize: 13, fontFamily: 'monospace')),
+        title: Text(_currentPath, style: const TextStyle(fontSize: 12, fontFamily: 'monospace')),
         actions: [
-          IconButton(icon: const Icon(Icons.pie_chart), onPressed: () { /* Aquí irá el Baobab */ }),
+          IconButton(icon: const Icon(Icons.pie_chart), onPressed: _mostrarBaobab),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles),
         ],
       ),
       body: Column(
         children: [
-          // PANEL DE CONTROL DE SERVIDOR (Aparece si detecta Node/Java)
           if (_serverType != ServerType.generic)
-            Container(
+            Card(
               margin: const EdgeInsets.all(10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.dns, color: Colors.blue.shade700),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text("Projecte ${_serverType.name.toUpperCase()} detectat",
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _handleServerAction('start'),
-                    icon: const Icon(Icons.play_arrow, size: 18),
-                    label: const Text("START"),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () => _handleServerAction('stop'),
-                    icon: const Icon(Icons.stop, size: 18),
-                    label: const Text("STOP"),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                  ),
-                ],
+              color: Colors.blue.shade50,
+              child: ListTile(
+                leading: const Icon(Icons.settings_input_component),
+                title: Text("Servidor ${_serverType.name.toUpperCase()} detectat"),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(onPressed: () => _handleServerAction('start'), style: ElevatedButton.styleFrom(backgroundColor: Colors.green), child: const Text("START")),
+                    const SizedBox(width: 5),
+                    ElevatedButton(onPressed: () => _handleServerAction('stop'), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text("STOP")),
+                  ],
+                ),
               ),
             ),
-
-          // LISTA DE ARCHIVOS
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator())
@@ -191,38 +247,48 @@ Future<void> _refreshFiles() async {
                   itemBuilder: (context, index) {
                     final item = _items[index];
                     return ListTile(
-                      leading: Icon(
-                        item['isDirectory'] ? Icons.folder : Icons.insert_drive_file,
-                        color: item['isDirectory'] ? Colors.amber.shade700 : Colors.grey,
-                      ),
+                      leading: Icon(item['isDirectory'] ? Icons.folder : Icons.description, color: item['isDirectory'] ? Colors.amber : Colors.grey),
                       title: Text(item['name']),
-                      subtitle: Text("${item['permissions']} | ${item['owner']}"),
-                      onTap: () => item['isDirectory'] ? _navigateTo(item['name']) : _showFileActions(item),
+                      subtitle: Text("${item['permissions']} | ${item['size']} bytes"),
+                      onTap: () => item['isDirectory'] ? _navigateTo(item['name']) : null,
                     );
                   },
                 ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () { /* Lógica de Upload ZIP */ },
-        child: const Icon(Icons.upload_file),
-      ),
     );
+  }
+}
+
+// --- PINTORES Y COLORES ---
+
+List<Color> _getColors() => [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple, Colors.cyan];
+
+class DiskUsagePainter extends CustomPainter {
+  final Map<String, int> folderSizes;
+  DiskUsagePainter(this.folderSizes);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (folderSizes.isEmpty) return;
+    final double totalSize = folderSizes.values.fold(0, (sum, item) => sum + item);
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    final double radius = min(size.width, size.height) / 2;
+    double startAngle = -pi / 2;
+
+    int i = 0;
+    folderSizes.forEach((name, bytes) {
+      final sweepAngle = (bytes / totalSize) * 2 * pi;
+      final paint = Paint()..color = _getColors()[i % _getColors().length]..style = PaintingStyle.fill;
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, sweepAngle, true, paint);
+      startAngle += sweepAngle;
+      i++;
+    });
+    // Agujero central para el Donut
+    canvas.drawCircle(center, radius * 0.4, Paint()..color = Colors.white);
   }
 
-  void _showFileActions(Map<String, dynamic> item) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(leading: const Icon(Icons.info_outline), title: const Text("Informació"), onTap: () {}),
-            ListTile(leading: const Icon(Icons.edit), title: const Text("Reanomenar"), onTap: () {}),
-            ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text("Esborrar"), onTap: () {}),
-          ],
-        ),
-      ),
-    );
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
