@@ -10,10 +10,9 @@ import '../services/sshService.dart';
 import '../services/fileService.dart';
 import '../models/serverModel.dart';
 
-// --- MODELO DE DATOS ---
+// --- MODELO DE DATOS INTERNO ---
 class FileModel {
   final String name;
-  final String path;
   final int size;
   final bool isDirectory;
   final String permissions;
@@ -21,17 +20,11 @@ class FileModel {
 
   FileModel({
     required this.name,
-    required this.path,
     required this.size,
     required this.isDirectory,
     this.permissions = "",
     this.owner = "",
   });
-
-  double getRelativeSize(int totalSize) {
-    if (totalSize == 0) return 0;
-    return size / totalSize;
-  }
 }
 
 class FileManagerScreen extends StatefulWidget {
@@ -63,12 +56,15 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _refreshFiles();
   }
 
-  // --- LÓGICA DE NAVEGACIÓN Y LISTADO ---
+  // --- NAVEGACIÓN Y LISTADO ---
   Future<void> _refreshFiles() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      String rawList = await _fileService.list(_currentPath);
+      // Obtenemos el listado y decodificamos bytes a String
+      var bytes = await widget.sshService.client.run("ls -ll '$_currentPath'");
+      String rawList = utf8.decode(bytes);
+      
       final lines = rawList.split('\n');
       List<Map<String, dynamic>> tempItems = [];
 
@@ -78,13 +74,10 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
 
         final parts = l.split(RegExp(r'\s+'));
         if (parts.length >= 9) {
-          // Buscamos la hora para limpiar el nombre del archivo
+          // Buscamos la hora para saltarla y obtener el nombre limpio
           int horaIndex = -1;
           for (int i = 0; i < parts.length; i++) {
-            if (parts[i].contains(':')) {
-              horaIndex = i;
-              break;
-            }
+            if (parts[i].contains(':')) { horaIndex = i; break; }
           }
 
           String name = (horaIndex != -1 && horaIndex + 1 < parts.length)
@@ -117,7 +110,19 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     }
   }
 
-  // --- LÓGICA DEL BAOBAB ---
+  void _navigateTo(String name) {
+    if (name == "..") {
+      if (_currentPath == widget.initialPath || _currentPath == "/") return;
+      List<String> parts = _currentPath.split('/');
+      parts.removeLast();
+      _currentPath = parts.join('/') == "" ? "/" : parts.join('/');
+    } else {
+      _currentPath = _currentPath == "/" ? "/$name" : "$_currentPath/$name";
+    }
+    _refreshFiles();
+  }
+
+  // --- ANALIZADOR BAOBAB ---
   void _mostrarBaobab() async {
     setState(() => _isLoading = true);
     try {
@@ -131,7 +136,6 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
           carpetas.add(FileModel(
             name: parts.sublist(1).join(' '),
             size: int.tryParse(parts[0]) ?? 0,
-            path: "",
             isDirectory: true,
           ));
         }
@@ -139,27 +143,27 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       carpetas.sort((a, b) => b.size.compareTo(a.size));
 
       setState(() => _isLoading = false);
-      _abrirDialogoBaobab(carpetas);
+      _dialogoBaobab(carpetas);
     } catch (e) {
       setState(() => _isLoading = false);
       _showSnackBar("Error Baobab: $e", isError: true);
     }
   }
 
-  void _abrirDialogoBaobab(List<FileModel> datos) {
+  void _dialogoBaobab(List<FileModel> datos) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Ús del disc (Baobab)"),
+        title: const Text("Analitzador de disc"),
         content: SizedBox(
           width: 400,
-          height: 400,
+          height: 450,
           child: Column(
             children: [
               Expanded(
                 flex: 2,
                 child: CustomPaint(
-                  painter: DiskUsagePainter({for (var f in datos.take(6)) f.name: f.size}),
+                  painter: DiskUsagePainter({for (var f in datos.take(5)) f.name: f.size}),
                   size: const Size(200, 200),
                 ),
               ),
@@ -167,11 +171,11 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
               Expanded(
                 flex: 1,
                 child: ListView.builder(
-                  itemCount: datos.take(5).length,
+                  itemCount: datos.length > 5 ? 5 : datos.length,
                   itemBuilder: (context, i) => ListTile(
                     dense: true,
                     leading: Icon(Icons.circle, color: _getColors()[i % _getColors().length], size: 12),
-                    title: Text(datos[i].name, overflow: TextOverflow.ellipsis),
+                    title: Text(datos[i].name, style: const TextStyle(fontSize: 11)),
                     trailing: Text("${(datos[i].size / 1024).toStringAsFixed(1)} KB"),
                   ),
                 ),
@@ -184,31 +188,40 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     );
   }
 
-  // --- LÓGICA DE UPLOAD ---
-  Future<void> _uploadFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result != null && result.files.single.path != null) {
-        setState(() => _isLoading = true);
-        File localFile = File(result.files.single.path!);
-        String fileName = p.basename(localFile.path);
-        
-        final sftp = await widget.sshService.client.sftp();
-        final remoteFile = await sftp.open('$_currentPath/$fileName', 
-            mode: SftpFileOpenMode.create | SftpFileOpenMode.write);
-        
-        await remoteFile.write(localFile.openRead().cast());
-        _showSnackBar("Fitxer '$fileName' pujat.");
-        _refreshFiles();
-      }
-    } catch (e) {
-      _showSnackBar("Error upload: $e", isError: true);
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
+  // --- GESTIÓN DE ARCHIVOS ---
+Future<void> _uploadFile() async {
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    
+    if (result != null && result.files.single.path != null) {
+      setState(() => _isLoading = true);
+      
+      File localFile = File(result.files.single.path!);
+      String fileName = p.basename(localFile.path); // Se declara aquí
+      
+      final sftp = await widget.sshService.client.sftp();
+      final remoteFile = await sftp.open('$_currentPath/$fileName', 
+          mode: SftpFileOpenMode.create | SftpFileOpenMode.write);
+      
+      await remoteFile.write(localFile.openRead().cast());
+      _showSnackBar("Pujat: $fileName");
 
-  // --- ACCIONES DE ARCHIVO (Borrar/Renombrar/Info) ---
+      // EL UNZIP DEBE IR AQUÍ DENTRO (donde fileName existe)
+      if (fileName.endsWith('.zip')) {
+        // Ejecutamos unzip en el servidor
+        await widget.sshService.client.run("cd '$_currentPath' && unzip -o '$fileName'");
+        _showSnackBar("Arxiu descomprimit automàticament");
+      }
+      
+      // Refrescamos una sola vez al final de todo el proceso
+      _refreshFiles();
+    }
+  } catch (e) {
+    _showSnackBar("Error upload: $e", isError: true);
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
   void _showFileActions(Map<String, dynamic> item) {
     showModalBottomSheet(
       context: context,
@@ -218,26 +231,17 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
             ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text("Informació"),
-              onTap: () {
-                Navigator.pop(context);
-                _showDetails(item);
-              },
+              onTap: () { Navigator.pop(context); _showDetails(item); },
             ),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text("Reanomenar"),
-              onTap: () {
-                Navigator.pop(context);
-                _renameItem(item['name']);
-              },
+              onTap: () { Navigator.pop(context); _renameItem(item['name']); },
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text("Esborrar"),
-              onTap: () {
-                Navigator.pop(context);
-                _deleteItem(item['name']);
-              },
+              onTap: () { Navigator.pop(context); _deleteItem(item['name']); },
             ),
           ],
         ),
@@ -248,6 +252,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   Future<void> _deleteItem(String name) async {
     await widget.sshService.client.run("rm -rf '$_currentPath/$name'");
     _refreshFiles();
+    _showSnackBar("Eliminat: $name");
   }
 
   Future<void> _renameItem(String oldName) async {
@@ -258,7 +263,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
         title: const Text("Nou nom"),
         content: TextField(controller: c),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancela")),
           TextButton(onPressed: () async {
             await widget.sshService.client.run("mv '$_currentPath/$oldName' '$_currentPath/${c.text}'");
             Navigator.pop(context);
@@ -274,13 +279,13 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(item['name']),
-        content: Text("Mida: ${item['size']} bytes\nPermisos: ${item['permissions']}\nPropietari: ${item['owner']}"),
+        content: Text("Mida: ${item['size']} B\nPermisos: ${item['permissions']}\nPropietari: ${item['owner']}"),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Tancar"))],
       ),
     );
   }
 
-  // --- ACCIONES DE SERVIDOR ---
+  // --- CONTROL SERVIDOR ---
   Future<void> _handleServerAction(String action) async {
     String cmd = "";
     if (_serverType == ServerType.nodejs) {
@@ -289,18 +294,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       cmd = action == 'start' ? "cd '$_currentPath' && java -jar *.jar &" : "pkill -f java";
     }
     await widget.sshService.client.run(cmd);
-    _showSnackBar("Comanda $action enviada");
-  }
-
-  void _navigateTo(String name) {
-    if (name == "..") {
-      List<String> parts = _currentPath.split('/');
-      parts.removeLast();
-      _currentPath = parts.join('/') == "" ? "/" : parts.join('/');
-    } else {
-      _currentPath = _currentPath == "/" ? "/$name" : "$_currentPath/$name";
-    }
-    _refreshFiles();
+    _showSnackBar("Acció $action enviada");
   }
 
   void _showSnackBar(String msg, {bool isError = false}) {
@@ -311,61 +305,76 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentPath, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
-        actions: [
-          IconButton(icon: const Icon(Icons.pie_chart), onPressed: _mostrarBaobab),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_serverType != ServerType.generic)
-            Card(
-              margin: const EdgeInsets.all(8),
-              color: Colors.blue.shade50,
-              child: ListTile(
-                title: Text("Projecte ${_serverType.name.toUpperCase()}"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ElevatedButton(onPressed: () => _handleServerAction('start'), style: ElevatedButton.styleFrom(backgroundColor: Colors.green), child: const Text("START")),
-                    const SizedBox(width: 5),
-                    ElevatedButton(onPressed: () => _handleServerAction('stop'), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text("STOP")),
-                  ],
+    return PopScope(
+      canPop: _currentPath == widget.initialPath,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _navigateTo("..");
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (_currentPath == widget.initialPath) Navigator.pop(context);
+              else _navigateTo("..");
+            },
+          ),
+          title: Text(_currentPath, style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
+          actions: [
+            IconButton(icon: const Icon(Icons.pie_chart_outline), onPressed: _mostrarBaobab),
+            IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles),
+          ],
+        ),
+        body: Column(
+          children: [
+            if (_serverType != ServerType.generic)
+              Card(
+                margin: const EdgeInsets.all(10),
+                color: Colors.orange.shade50,
+                child: ListTile(
+                  leading: const Icon(Icons.dns, color: Colors.orange),
+                  title: Text("Projecte ${_serverType.name.toUpperCase()}"),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton(onPressed: () => _handleServerAction('start'), style: ElevatedButton.styleFrom(backgroundColor: Colors.green), child: const Text("START")),
+                      const SizedBox(width: 5),
+                      ElevatedButton(onPressed: () => _handleServerAction('stop'), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text("STOP")),
+                    ],
+                  ),
                 ),
               ),
+            Expanded(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _items.length,
+                    itemBuilder: (context, i) {
+                      final item = _items[i];
+                      return ListTile(
+                        leading: Icon(item['isDirectory'] ? Icons.folder : Icons.description, 
+                                      color: item['isDirectory'] ? Colors.amber : Colors.grey),
+                        title: Text(item['name']),
+                        subtitle: Text("${item['permissions']} | ${item['size']} B"),
+                        onTap: () => item['isDirectory'] ? _navigateTo(item['name']) : _showFileActions(item),
+                        onLongPress: () => _showFileActions(item),
+                      );
+                    },
+                  ),
             ),
-          Expanded(
-            child: _isLoading 
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  itemCount: _items.length,
-                  itemBuilder: (context, i) {
-                    final item = _items[i];
-                    return ListTile(
-                      leading: Icon(item['isDirectory'] ? Icons.folder : Icons.description, 
-                                    color: item['isDirectory'] ? Colors.amber : Colors.grey),
-                      title: Text(item['name']),
-                      subtitle: Text(item['permissions']),
-                      onTap: () => item['isDirectory'] ? _navigateTo(item['name']) : _showFileActions(item),
-                      onLongPress: () => _showFileActions(item),
-                    );
-                  },
-                ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _uploadFile,
-        child: const Icon(Icons.upload_file),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _uploadFile,
+          child: const Icon(Icons.upload_file),
+        ),
       ),
     );
   }
 }
 
-// --- PAINTER ---
+// --- PINTORES ---
 List<Color> _getColors() => [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple, Colors.cyan];
 
 class DiskUsagePainter extends CustomPainter {
