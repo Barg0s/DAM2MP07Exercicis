@@ -14,19 +14,17 @@
 
 Fes una aplicació Flutter que permeti encriptar arxius a través del sistema de *clau pública* i *clau privada*, per compartir-los de manera segura.
 
-L'aplicació a de denir dues vites: 
+L'aplicació a de denir dues vites:
 
 **Encriptar**
 
-- ha de permetre escollir una clau pública 'rsa' per encriptar 
-- ha de permetre escollir un arxiu per encriptar 
+- ha de permetre escollir una clau pública 'rsa' per encriptar
+- ha de permetre escollir un arxiu per encriptar
 
-**Desencriptar** 
+**Desencriptar**
 
 - ha de permetre escollir una clau privada però per defecte ha de mostrar la ~/.ssh/id_rsa (o fer servir arxius .pem)
-
-- ha de permetre escollir l'arxiu a desencriptar 
-
+- ha de permetre escollir l'arxiu a desencriptar
 - ha de permetre escollir l'arxiu destí on es desencriptarà
 
 Aquest és un disseny de les funcionalitats que s'esperen:

@@ -112,7 +112,7 @@ class _VistaEncriptarState extends State<VistaEncriptar> {
               ),
               onPressed: () async {
                 // Encripta l'arxiu seleccionat amb la clau pública
-               await arxius.encriptarArxiu(publicKeyPath, filename);
+                await arxius.encriptarArxiu(publicKeyPath, arxius.getPath());
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Arxiu encriptat correctament!")),
                 );
