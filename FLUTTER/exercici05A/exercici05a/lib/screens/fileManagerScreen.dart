@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:dartssh2/dartssh2.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../services/sshService.dart';
 import '../services/fileService.dart';
@@ -55,7 +56,42 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _currentPath = widget.initialPath;
     _refreshFiles();
   }
-
+Future<void> _downloadFile(String name) async {
+    // 1. Mostramos indicador de carga o SnackBar de inicio
+    _showSnackBar("Iniciant descàrrega: $name...");
+    
+    try {
+      // 2. Abrimos conexión SFTP
+      final sftp = await widget.sshService.client.sftp();
+      
+      // 3. Construimos la ruta remota absoluta usando el contexto POSIX
+      // Esto evita problemas con las barras (\ vs /)
+      final posix = p.Context(style: p.Style.posix);
+      final String remotePath = posix.join(_currentPath, name);
+      
+      // 4. Abrimos el archivo remoto
+      final remoteFile = await sftp.open(remotePath);
+      
+      // 5. Leemos los bytes (en chunks para no colapsar la memoria)
+      final List<int> bytes = [];
+      await for (var chunk in remoteFile.read()) {
+        bytes.addAll(chunk);
+      }
+      
+      // 6. Obtenemos la ruta local (Downloads es difícil en iOS/Android, mejor Documents)
+      final dir = await getApplicationDocumentsDirectory();
+      final localPath = p.join(dir.path, name);
+      
+      // 7. Escribimos el archivo en el móvil
+      final localFile = File(localPath);
+      await localFile.writeAsBytes(bytes);
+      
+      _showSnackBar("Fet! Descarregat a Documents/$name");
+    } catch (e) {
+      print("Error detallado SFTP: $e");
+      _showSnackBar("Error: No s'ha trobat el fitxer al servidor", isError: true);
+    }
+  }
   // --- NAVEGACIÓN Y LISTADO ---
   Future<void> _refreshFiles() async {
     if (!mounted) return;
@@ -243,6 +279,11 @@ Future<void> _uploadFile() async {
               title: const Text("Esborrar"),
               onTap: () { Navigator.pop(context); _deleteItem(item['name']); },
             ),
+            ListTile(
+              leading: const Icon(Icons.download),
+              title: const Text("Descarregar"),
+              onTap: () { Navigator.pop(context); _downloadFile(item['name']); },
+            ),	
           ],
         ),
       ),
