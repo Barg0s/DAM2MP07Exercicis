@@ -10,35 +10,53 @@ class DiskUsagePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (folderSizes.isEmpty) return;
 
-    final double totalSize = folderSizes.values.fold(0, (sum, item) => sum + item);
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = min(size.width, size.height) / 2;
+    double total = folderSizes.values.fold(0, (s, i) => s + i);
+    Offset center = Offset(size.width / 2, size.height / 2);
+    double radius = min(size.width, size.height) / 2;
+    double startAngle = -pi / 2;
 
-    double startAngle = 0;
-    final List<Color> colors = [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple];
-
+    final colors = _getColors();
     int i = 0;
-    folderSizes.forEach((name, bytes) {
-      final sweepAngle = (bytes / totalSize) * 2 * pi;
-      final paint = Paint()
-        ..color = colors[i % colors.length]
-        ..style = PaintingStyle.fill;
 
-      // Dibujamos el arco proporcional al tamaño
+    folderSizes.forEach((name, bytes) {
+      double sweep = (bytes / total) * 2 * pi;
+
+      final paint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = colors[i % colors.length];
+
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         startAngle,
-        sweepAngle,
+        sweep,
         true,
         paint,
       );
 
-      startAngle += sweepAngle;
+      startAngle += sweep;
       i++;
     });
 
-    // Dibujar un círculo blanco en el centro para estilo "Donut"
-    canvas.drawCircle(center, radius * 0.4, Paint()..color = Colors.white);
+    // círculo interior (efecto donut)
+    canvas.drawCircle(
+      center,
+      radius * 0.4,
+      Paint()..color = Colors.white,
+    );
+  }
+
+  List<Color> _getColors() {
+    return [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.amber,
+      Colors.pink,
+      Colors.indigo,
+    ];
   }
 
   @override

@@ -11,22 +11,11 @@ import '../services/sshService.dart';
 import '../services/fileService.dart';
 import '../models/serverModel.dart';
 
-// --- MODELO DE DATOS INTERNO ---
-class FileModel {
-  final String name;
-  final int size;
-  final bool isDirectory;
-  final String permissions;
-  final String owner;
+import '../models/fileModel.dart';
+import '../widgets/diskUsagePainter.dart';
 
-  FileModel({
-    required this.name,
-    required this.size,
-    required this.isDirectory,
-    this.permissions = "",
-    this.owner = "",
-  });
-}
+// --- MODELO DE DATOS INTERNO ---
+
 
 class FileManagerScreen extends StatefulWidget {
   final String initialPath;
@@ -185,6 +174,8 @@ Future<void> _downloadFile(String name) async {
       _showSnackBar("Error Baobab: $e", isError: true);
     }
   }
+    List<Color> _getColors() => [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple, Colors.cyan];
+
 
   void _dialogoBaobab(List<FileModel> datos) {
     showDialog(
@@ -413,33 +404,4 @@ Future<void> _uploadFile() async {
       ),
     );
   }
-}
-
-// --- PINTORES ---
-List<Color> _getColors() => [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple, Colors.cyan];
-
-class DiskUsagePainter extends CustomPainter {
-  final Map<String, int> folderSizes;
-  DiskUsagePainter(this.folderSizes);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (folderSizes.isEmpty) return;
-    double total = folderSizes.values.fold(0, (s, i) => s + i);
-    Offset center = Offset(size.width / 2, size.height / 2);
-    double radius = min(size.width, size.height) / 2;
-    double startAngle = -pi / 2;
-
-    int i = 0;
-    folderSizes.forEach((name, bytes) {
-      double sweep = (bytes / total) * 2 * pi;
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, sweep, true, 
-                     Paint()..color = _getColors()[i % _getColors().length]);
-      startAngle += sweep;
-      i++;
-    });
-    canvas.drawCircle(center, radius * 0.4, Paint()..color = Colors.white);
-  }
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }

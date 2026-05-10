@@ -1,18 +1,15 @@
 class FileModel {
   final String name;
-  final String path;
   final int size;
   final bool isDirectory;
+  final String permissions;
+  final String owner;
 
   FileModel({
     required this.name,
-    required this.path,
     required this.size,
     required this.isDirectory,
+    this.permissions = "",
+    this.owner = "",
   });
-
-  double getRelativeSize(int totalSize) {
-    if (totalSize == 0) return 0;
-    return size / totalSize;
-  }
 }
