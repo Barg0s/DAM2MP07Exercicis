@@ -76,21 +76,23 @@ class Rectangle extends Drawable {
     final rect = Rect.fromPoints(topLeft, bottomRight);
 
     if (fill) {
-      final fillPaint = Paint()..style = PaintingStyle.fill;
+    final paint = Paint()..style = PaintingStyle.fill;
 
-      if (gradientType == 'linear' &&
-          gradientColor1 != null &&
-          gradientColor2 != null) {
-        fillPaint.shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [gradientColor1!, gradientColor2!],
-        ).createShader(rect);
-      } else {
-        fillPaint.color = fillColor ?? color;
-      }
+    if (gradientType == 'linear' &&
+        gradientColor1 != null &&
+        gradientColor2 != null) {
 
-      canvas.drawRect(rect, fillPaint);
+      paint.shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [gradientColor1!, gradientColor2!],
+      ).createShader(rect);
+
+    } else {
+      paint.color = fillColor ?? color;
+    }
+
+      canvas.drawRect(rect, paint);
     }
 
     final strokePaint = Paint()
@@ -233,6 +235,6 @@ class TextElement extends Drawable {
         'text': text,
         'x': position.dx,
         'y': position.dy,
-        'color': color.value,
+        'color': color,
       };
 }
