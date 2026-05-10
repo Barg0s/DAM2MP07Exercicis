@@ -319,15 +319,75 @@ Future<void> _uploadFile() async {
 
   // --- CONTROL SERVIDOR ---
   Future<void> _handleServerAction(String action) async {
-    String cmd = "";
-    if (_serverType == ServerType.nodejs) {
-      cmd = action == 'start' ? "cd '$_currentPath' && npm start &" : "pkill -f node";
-    } else if (_serverType == ServerType.java) {
-      cmd = action == 'start' ? "cd '$_currentPath' && java -jar *.jar &" : "pkill -f java";
+  String basePath = "cd '$_currentPath'";
+  String cmd = "";
+
+  // 🔧 Definimos comando según tipo de server
+  if (_serverType == ServerType.nodejs) {
+    if (action == 'start') {
+      cmd =
+          "$basePath && nohup npm start > app.log 2>&1 & echo \$! > app.pid";
+    } else {
+      cmd = "$basePath && kill \$(cat app.pid) && rm app.pid";
     }
-    await widget.sshService.client.run(cmd);
-    _showSnackBar("Acció $action enviada");
+  } else if (_serverType == ServerType.java) {
+    if (action == 'start') {
+      cmd =
+          "$basePath && nohup java -jar *.jar > app.log 2>&1 & echo \$! > app.pid";
+    } else {
+      cmd = "$basePath && kill \$(cat app.pid) && rm app.pid";
+    }
   }
+
+  try {
+    await widget.sshService.client.run(cmd);
+
+    if (action == 'start') {
+      _showSnackBar("Arrancando servidor...");
+
+      int port = _serverType == ServerType.nodejs ? 3000 : 8080;
+
+      await _waitForServer(
+        host: "127.0.0.1", // ⚠️ cámbialo si el server es remoto
+        port: port,
+      );
+
+      _showSnackBar("Servidor activo ✅");
+    } else {
+      _showSnackBar("Servidor detenido 🛑");
+    }
+  } catch (e) {
+    _showSnackBar("Error: $e", isError: true);
+  }
+}
+
+
+  Future<bool> _isPortOpen(String host, int port) async {
+    try {
+      final socket = await Socket.connect(
+        host,
+        port,
+        timeout: const Duration(seconds: 2),
+      );
+      socket.destroy();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+  Future<void> _waitForServer({
+    required String host,
+    required int port,
+    int maxRetries = 15,
+  }) async {
+    for (int i = 0; i < maxRetries; i++) {
+      if (await _isPortOpen(host, port)) return;
+      await Future.delayed(const Duration(seconds: 1));
+    }
+
+    throw Exception("El servidor no ha arrancado a tiempo");
+  }
+
 
   void _showSnackBar(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
