@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => FileManagerScreen(
-              initialPath: '/',
+              initialPath: '/home/super',
               sshService: sshService,
             ),
           ),

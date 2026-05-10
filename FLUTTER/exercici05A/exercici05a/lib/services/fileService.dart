@@ -11,7 +11,7 @@ class FileService {
 
   // Llistar arxius amb detalls de permisos
   Future<String> list(String path) async {
-    final result = await ssh.client.run('ls -la $path');
+    final result = await ssh.client.run('ls -ll "$path"');
     return String.fromCharCodes(result);
   }
 
@@ -48,7 +48,7 @@ class FileService {
 
   // Detectar tipus de servidor en una carpeta
   Future<ServerType> detectServerType(String path) async {
-    final ls = await ssh.client.run('ls $path');
+    final ls = await ssh.client.run('ls "$path"');
     final content = String.fromCharCodes(ls);
     
     if (content.contains('package.json')) return ServerType.nodejs;

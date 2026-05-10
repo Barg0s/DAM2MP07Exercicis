@@ -3,27 +3,15 @@ import 'package:flutter/material.dart';
 import '../services/sshService.dart';
 import '../services/fileService.dart';
 import '../models/serverModel.dart';
-import 'arxius.dart';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:dartssh2/dartssh2.dart';
-// Importa tus widgets personalizados aquí
-// import '../widgets/custom_widgets.dart'; 
-import '../widgets/IndentedListGroup.dart';
-import '../widgets/PortForwardingWidget.dart';
-import '../widgets/ServerStatusWidget.dart';
-import '../widgets/StatusCanvasIndicator.dart';
-import '../widgets/customLabeledInput.dart';
 
 class FileManagerScreen extends StatefulWidget {
   final String initialPath;
   final SSHService sshService;
 
   const FileManagerScreen({
-    super.key, 
-    required this.initialPath, 
-    required this.sshService
+    super.key,
+    required this.initialPath,
+    required this.sshService,
   });
 
   @override
@@ -45,93 +33,156 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _refreshFiles();
   }
 
-  // Método principal para leer archivos reales mediante SSH
-  Future<void> _refreshFiles() async {
-    setState(() => _isLoading = true);
-    try {
-      // 1. Listar archivos
-      final rawList = await _fileService.list(_currentPath);
-      
-      // 2. Parsear el resultado de 'ls -la' (esto es una simplificación)
-      // En una app real, podrías usar comandos más limpios como 'ls -F'
-      final lines = rawList.split('\n').skip(1); // Saltar la línea de 'total'
-      
-      List<Map<String, dynamic>> tempItems = [];
-      for (var line in lines) {
-        if (line.trim().isEmpty) continue;
-        final parts = line.split(RegExp(r'\s+'));
-        if (parts.length < 9) continue;
-        
-        final name = parts.sublist(8).join(' ');
-        if (name == '.') continue; // Ignorar directorio actual
+  // Carga archivos y detecta si hay un servidor (Node/Java)
+Future<void> _refreshFiles() async {
+  setState(() => _isLoading = true);
+  try {
+    // 1. Obtenemos el listado mediante SSH
+    // Usamos -la para ver todo, pero el parsing filtrará la basura
+    String rawList = await _fileService.list(_currentPath);
+    
+    print("--- DEBUG: BRUTO RECIBIDO ---");
+    print(rawList);
+
+    final lines = rawList.split('\n');
+    List<Map<String, dynamic>> tempItems = [];
+
+    for (var line in lines) {
+      String l = line.trim();
+
+      // FILTRO CRÍTICO: 
+      // Si la línea no empieza por 'd' (directorio) o '-' (archivo), es BASURA.
+      // Esto eliminará los mensajes de error "ls: cannot access..." y las horas sueltas.
+      if (!l.startsWith('d') && !l.startsWith('-')) {
+        continue;
+      }
+
+      final parts = l.split(RegExp(r'\s+'));
+
+      // En un 'ls -l' de Linux, el nombre real empieza en el índice 8.
+      if (parts.length >= 9) {
+        // Unimos el resto por si el nombre tiene espacios (ej: "Mi Proyecto.zip")
+          final String name = parts.last;
+
+        // Ignoramos los punteros al mismo directorio
+        if (name == '.' || name == '..') continue;
 
         tempItems.add({
           'name': name,
-          'isDirectory': line.startsWith('d'),
+          'isDirectory': l.startsWith('d'),
           'permissions': parts[0],
-          'owner': '${parts[2]}:${parts[3]}',
+          'size': parts[4],
+          'owner': parts[2],
         });
       }
+    }
 
-      // 3. Detectar si es un servidor (NodeJS/Java)
-      final type = await _fileService.detectServerType(_currentPath);
+    // 2. DETECCIÓN DE PROYECTO
+    // Esto es lo que hace tu amigo: detectar si hay package.json o .jar
+    final type = await _fileService.detectServerType(_currentPath);
 
-      setState(() {
-        _items = tempItems;
-        _serverType = type;
-        _isLoading = false;
-      });
+    setState(() {
+      _items = tempItems;
+      _serverType = type;
+      _isLoading = false;
+    });
+    
+    print("DEBUG: Lista procesada con ${_items.length} elementos. Tipo: $_serverType");
+
+  } catch (e) {
+    setState(() => _isLoading = false);
+    print("ERROR EN REFRESH: $e");
+    _showSnackBar("Error de llistat: $e", isError: true);
+  }
+}
+  // Gestión de procesos START / STOP
+  Future<void> _handleServerAction(String action) async {
+    String command = '';
+    String projectName = _currentPath.split('/').last;
+
+    if (_serverType == ServerType.nodejs) {
+      command = action == 'start' 
+          ? 'cd $_currentPath && npm start &' 
+          : 'pkill -f "$projectName"';
+    } else if (_serverType == ServerType.java) {
+      command = action == 'start' 
+          ? 'cd $_currentPath && java -jar *.jar &' 
+          : 'pkill -f "java"';
+    }
+
+    try {
+      await widget.sshService.client.run(command);
+      _showSnackBar("Comando ${action.toUpperCase()} enviat a $projectName");
     } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al llistar fitxers: $e")),
-      );
+      _showSnackBar("Error en l'operació: $e", isError: true);
     }
   }
 
   void _navigateTo(String name) {
     if (name == "..") {
-      // Lógica para subir de nivel
       List<String> parts = _currentPath.split('/');
       parts.removeLast();
-      if (parts.isEmpty || (parts.length == 1 && parts[0] == "")) {
-        _currentPath = "/";
-      } else {
-        _currentPath = parts.join('/');
-      }
+      _currentPath = parts.isEmpty || (parts.length == 1 && parts[0] == "") ? "/" : parts.join('/');
     } else {
       _currentPath = _currentPath == "/" ? "/$name" : "$_currentPath/$name";
     }
     _refreshFiles();
   }
 
+  void _showSnackBar(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: isError ? Colors.red : Colors.green),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentPath, style: const TextStyle(fontSize: 14)),
+        title: Text(_currentPath, style: const TextStyle(fontSize: 13, fontFamily: 'monospace')),
         actions: [
+          IconButton(icon: const Icon(Icons.pie_chart), onPressed: () { /* Aquí irá el Baobab */ }),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles),
         ],
       ),
       body: Column(
         children: [
-          // Sección de servidor detectado (Requisito MD)
+          // PANEL DE CONTROL DE SERVIDOR (Aparece si detecta Node/Java)
           if (_serverType != ServerType.generic)
             Container(
-              padding: const EdgeInsets.all(10),
-              color: Colors.blue.withOpacity(0.1),
+              margin: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Servidor ${_serverType.name.toUpperCase()} detectat"),
-                  // Aquí iría tu ServerStatusWidget
-                  const Icon(Icons.dns, color: Colors.blue),
+                  Icon(Icons.dns, color: Colors.blue.shade700),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text("Projecte ${_serverType.name.toUpperCase()} detectat",
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () => _handleServerAction('start'),
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: const Text("START"),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => _handleServerAction('stop'),
+                    icon: const Icon(Icons.stop, size: 18),
+                    label: const Text("STOP"),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  ),
                 ],
               ),
             ),
-          
-          // Lista de archivos
+
+          // LISTA DE ARCHIVOS
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator())
@@ -142,27 +193,19 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
                     return ListTile(
                       leading: Icon(
                         item['isDirectory'] ? Icons.folder : Icons.insert_drive_file,
-                        color: item['isDirectory'] ? Colors.orange : Colors.grey,
+                        color: item['isDirectory'] ? Colors.amber.shade700 : Colors.grey,
                       ),
                       title: Text(item['name']),
                       subtitle: Text("${item['permissions']} | ${item['owner']}"),
-                      onTap: () {
-                        if (item['isDirectory']) {
-                          _navigateTo(item['name']);
-                        } else {
-                          // Mostrar información del archivo (Requisito MD)
-                          _showFileActions(item);
-                        }
-                      },
+                      onTap: () => item['isDirectory'] ? _navigateTo(item['name']) : _showFileActions(item),
                     );
                   },
                 ),
           ),
         ],
       ),
-      // Botón para subir archivos (Requisito MD)
       floatingActionButton: FloatingActionButton(
-        onPressed: () { /* Lógica para llamar a FilePicker y FileService.uploadItem */ },
+        onPressed: () { /* Lógica de Upload ZIP */ },
         child: const Icon(Icons.upload_file),
       ),
     );
@@ -171,33 +214,14 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   void _showFileActions(Map<String, dynamic> item) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text("Informació i permisos"),
-            onTap: () {
-              Navigator.pop(context);
-              // Aquí usarías tu widget personalizado de "Camp de text amb títol"
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.edit),
-            title: const Text("Canviar nom"),
-            onTap: () { /* Lógica de rename */ },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text("Esborrar"),
-            onTap: () { /* Lógica de delete */ },
-          ),
-          ListTile(
-            leading: const Icon(Icons.download),
-            title: const Text("Descarregar"),
-            onTap: () { /* Lógica de SFTP download */ },
-          ),
-        ],
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(leading: const Icon(Icons.info_outline), title: const Text("Informació"), onTap: () {}),
+            ListTile(leading: const Icon(Icons.edit), title: const Text("Reanomenar"), onTap: () {}),
+            ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text("Esborrar"), onTap: () {}),
+          ],
+        ),
       ),
     );
   }
