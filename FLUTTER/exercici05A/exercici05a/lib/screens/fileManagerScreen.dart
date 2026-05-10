@@ -2,44 +2,58 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart' as p; 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../services/sshService.dart';
 import '../services/fileService.dart';
 import '../models/serverModel.dart';
 
-// --- MODELO DE DATOS INTERNO ---
-class FileModel {
-  final String name;
-  final int size;
-  final bool isDirectory;
-  final String permissions;
-  final String owner;
+// --- CONTEXTO DE RUTA LINUX (Evita el error de las barras \ en Windows) ---
+final linuxPath = p.Context(style: p.Style.posix);
 
-  FileModel({
-    required this.name,
-    required this.size,
-    required this.isDirectory,
-    this.permissions = "",
-    this.owner = "",
-  });
+// --- WIDGET PERSONALIZADO: CÍRCULO CANVAS (Requisito Enunciado) ---
+class StatusCanvasIndicator extends StatelessWidget {
+  final bool isOnline;
+  final double size;
+  const StatusCanvasIndicator({super.key, required this.isOnline, this.size = 20.0});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _StatusPainter(isOnline: isOnline),
+    );
+  }
 }
 
+class _StatusPainter extends CustomPainter {
+  final bool isOnline;
+  _StatusPainter({required this.isOnline});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = isOnline ? Colors.green : Colors.red
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width / 2, paint);
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// --- PANTALLA PRINCIPAL ---
 class FileManagerScreen extends StatefulWidget {
   final String initialPath;
   final SSHService sshService;
-
-  const FileManagerScreen({
-    super.key,
-    required this.initialPath,
-    required this.sshService,
-  });
+  const FileManagerScreen({super.key, required this.initialPath, required this.sshService});
 
   @override
   State<FileManagerScreen> createState() => _FileManagerScreenState();
 }
+
 
 class _FileManagerScreenState extends State<FileManagerScreen> {
   late FileService _fileService;
@@ -47,6 +61,10 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   List<Map<String, dynamic>> _items = [];
   bool _isLoading = true;
   ServerType _serverType = ServerType.generic;
+
+  bool _isServerRunning = false;
+  bool _isPortForwarded = false;
+  dynamic _forwardHandle;
 
   @override
   void initState() {
@@ -56,349 +74,205 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _refreshFiles();
   }
 
-  // --- NAVEGACIÓN Y LISTADO ---
-  Future<void> _refreshFiles() async {
-    if (!mounted) return;
-    setState(() => _isLoading = true);
+  // --- NAVEGACIÓN (Forzando Estilo Linux) ---
+  void _navigateTo(String name) {
+    if (name == "..") {
+      if (_currentPath == widget.initialPath || _currentPath == "/") return;
+      _currentPath = linuxPath.dirname(_currentPath);
+    } else {
+      _currentPath = linuxPath.join(_currentPath, name);
+    }
+    _refreshFiles();
+  }
+
+  // --- CONTROL DE SERVIDOR MEJORADO ---
+  Future<void> _checkServerStatus() async {
+    String cmd = _serverType == ServerType.nodejs ? "pgrep -f node" : "pgrep -f java";
     try {
-      // Obtenemos el listado y decodificamos bytes a String
-      var bytes = await widget.sshService.client.run("ls -ll '$_currentPath'");
-      String rawList = utf8.decode(bytes);
-      
-      final lines = rawList.split('\n');
-      List<Map<String, dynamic>> tempItems = [];
+      final result = await widget.sshService.client.run(cmd);
+      final output = utf8.decode(result).trim();
+      if (mounted) setState(() => _isServerRunning = output.isNotEmpty);
+    } catch (e) {
+      if (mounted) setState(() => _isServerRunning = false);
+    }
+  }
 
-      for (var line in lines) {
-        String l = line.trim();
-        if (!l.startsWith('d') && !l.startsWith('-')) continue;
+  Future<void> _handleServerAction(String action) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => const AlertDialog(
+        content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text("Processant...")]),
+      ),
+    );
 
-        final parts = l.split(RegExp(r'\s+'));
-        if (parts.length >= 9) {
-          // Buscamos la hora para saltarla y obtener el nombre limpio
-          int horaIndex = -1;
-          for (int i = 0; i < parts.length; i++) {
-            if (parts[i].contains(':')) { horaIndex = i; break; }
-          }
-
-          String name = (horaIndex != -1 && horaIndex + 1 < parts.length)
-              ? parts.sublist(horaIndex + 1).join(' ')
-              : parts.sublist(8).join(' ');
-
-          name = name.trim();
-          if (name == "." || name == "..") continue;
-
-          tempItems.add({
-            'name': name,
-            'isDirectory': l.startsWith('d'),
-            'permissions': parts[0],
-            'size': parts[4],
-            'owner': parts[2],
-          });
-        }
+    try {
+      String cmd = "";
+      if (_serverType == ServerType.nodejs) {
+        cmd = (action == 'start') 
+            ? "cd '$_currentPath' && nohup npm start > /dev/null 2>&1 &" 
+            : "pkill -f node";
+      } else {
+        cmd = (action == 'start') 
+            ? "cd '$_currentPath' && nohup java -jar *.jar > /dev/null 2>&1 &" 
+            : "pkill -f java";
       }
 
-      final type = await _fileService.detectServerType(_currentPath);
+      await widget.sshService.client.run(cmd);
+      await Future.delayed(const Duration(seconds: 3)); // Espera para que Linux registre el proceso
+      await _checkServerStatus();
 
-      setState(() {
-        _items = tempItems;
-        _serverType = type;
-        _isLoading = false;
-      });
+      if (mounted) Navigator.pop(context);
+      _showSnackBar("Servidor ${action == 'start' ? 'encès' : 'aturat'}");
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) Navigator.pop(context);
       _showSnackBar("Error: $e", isError: true);
     }
   }
 
-  void _navigateTo(String name) {
-    if (name == "..") {
-      if (_currentPath == widget.initialPath || _currentPath == "/") return;
-      List<String> parts = _currentPath.split('/');
-      parts.removeLast();
-      _currentPath = parts.join('/') == "" ? "/" : parts.join('/');
-    } else {
-      _currentPath = _currentPath == "/" ? "/$name" : "$_currentPath/$name";
-    }
-    _refreshFiles();
-  }
-
-  // --- ANALIZADOR BAOBAB ---
-  void _mostrarBaobab() async {
-    setState(() => _isLoading = true);
+  // --- REDIRECCIÓN Y DESCARGAS ---
+  Future<void> _togglePortForwarding(bool value) async {
     try {
-      var bytes = await widget.sshService.client.run("cd '$_currentPath' && du -sb *");
-      String raw = utf8.decode(bytes);
-      
-      List<FileModel> carpetas = [];
-      for (var line in raw.trim().split('\n')) {
-        final parts = line.split(RegExp(r'\s+'));
-        if (parts.length >= 2) {
-          carpetas.add(FileModel(
-            name: parts.sublist(1).join(' '),
-            size: int.tryParse(parts[0]) ?? 0,
-            isDirectory: true,
-          ));
-        }
+      if (value) {
+        _forwardHandle = await widget.sshService.client.forwardLocal('127.0.0.1', 80);
+        _showSnackBar("Túnel obert a localhost:8080");
+      } else {
+        await _forwardHandle?.close();
+        _forwardHandle = null;
+        _showSnackBar("Túnel tancat");
       }
-      carpetas.sort((a, b) => b.size.compareTo(a.size));
-
-      setState(() => _isLoading = false);
-      _dialogoBaobab(carpetas);
+      setState(() => _isPortForwarded = value);
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar("Error Baobab: $e", isError: true);
+      _showSnackBar("Error: El servidor ha d'estar START", isError: true);
+      setState(() => _isPortForwarded = false);
     }
   }
 
-  void _dialogoBaobab(List<FileModel> datos) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Analitzador de disc"),
-        content: SizedBox(
-          width: 400,
-          height: 450,
-          child: Column(
-            children: [
-              Expanded(
-                flex: 2,
-                child: CustomPaint(
-                  painter: DiskUsagePainter({for (var f in datos.take(5)) f.name: f.size}),
-                  size: const Size(200, 200),
-                ),
-              ),
-              const Divider(),
-              Expanded(
-                flex: 1,
-                child: ListView.builder(
-                  itemCount: datos.length > 5 ? 5 : datos.length,
-                  itemBuilder: (context, i) => ListTile(
-                    dense: true,
-                    leading: Icon(Icons.circle, color: _getColors()[i % _getColors().length], size: 12),
-                    title: Text(datos[i].name, style: const TextStyle(fontSize: 11)),
-                    trailing: Text("${(datos[i].size / 1024).toStringAsFixed(1)} KB"),
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Tancar"))],
-      ),
-    );
+  Future<void> _downloadFile(String name) async {
+    try {
+      _showSnackBar("Baixant $name...");
+      final sftp = await widget.sshService.client.sftp();
+      final remoteFile = await sftp.open(linuxPath.join(_currentPath, name));
+      
+      final List<int> bytes = [];
+      await for (var chunk in remoteFile.read()) { bytes.addAll(chunk); }
+      
+      final dir = await getApplicationDocumentsDirectory();
+      final localFile = File(p.join(dir.path, name)); 
+      await localFile.writeAsBytes(bytes);
+      _showSnackBar("Guardat a Documents de l'App");
+    } catch (e) { _showSnackBar("Error: $e", isError: true); }
   }
 
   // --- GESTIÓN DE ARCHIVOS ---
-Future<void> _uploadFile() async {
-  try {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-    
-    if (result != null && result.files.single.path != null) {
-      setState(() => _isLoading = true);
-      
-      File localFile = File(result.files.single.path!);
-      String fileName = p.basename(localFile.path); // Se declara aquí
-      
-      final sftp = await widget.sshService.client.sftp();
-      final remoteFile = await sftp.open('$_currentPath/$fileName', 
-          mode: SftpFileOpenMode.create | SftpFileOpenMode.write);
-      
-      await remoteFile.write(localFile.openRead().cast());
-      _showSnackBar("Pujat: $fileName");
+  Future<void> _refreshFiles() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      var bytes = await widget.sshService.client.run("ls -ll '$_currentPath'");
+      String raw = utf8.decode(bytes);
+      final lines = raw.split('\n');
+      List<Map<String, dynamic>> temp = [];
 
-      // EL UNZIP DEBE IR AQUÍ DENTRO (donde fileName existe)
-      if (fileName.endsWith('.zip')) {
-        // Ejecutamos unzip en el servidor
-        await widget.sshService.client.run("cd '$_currentPath' && unzip -o '$fileName'");
-        _showSnackBar("Arxiu descomprimit automàticament");
+      for (var line in lines) {
+        String l = line.trim();
+        if (!l.startsWith('d') && !l.startsWith('-')) continue;
+        final parts = l.split(RegExp(r'\s+'));
+        if (parts.length >= 9) {
+          int hIdx = -1;
+          for (int i = 0; i < parts.length; i++) { if (parts[i].contains(':')) { hIdx = i; break; } }
+          String name = (hIdx != -1 && hIdx + 1 < parts.length) ? parts.sublist(hIdx+1).join(' ') : parts.sublist(8).join(' ');
+          if (name.trim() == "." || name.trim() == "..") continue;
+          temp.add({'name': name.trim(), 'isDirectory': l.startsWith('d'), 'permissions': parts[0], 'size': parts[4], 'owner': parts[2]});
+        }
       }
-      
-      // Refrescamos una sola vez al final de todo el proceso
+      _serverType = await _fileService.detectServerType(_currentPath);
+      if (_serverType != ServerType.generic) _checkServerStatus();
+      setState(() { _items = temp; _isLoading = false; });
+    } catch (e) { setState(() => _isLoading = false); }
+  }
+
+  Future<void> _uploadFile() async {
+    FilePickerResult? res = await FilePicker.platform.pickFiles();
+    if (res != null && res.files.single.path != null) {
+      setState(() => _isLoading = true);
+      File local = File(res.files.single.path!);
+      String name = p.basename(local.path);
+      final sftp = await widget.sshService.client.sftp();
+      final remote = await sftp.open(linuxPath.join(_currentPath, name), mode: SftpFileOpenMode.create | SftpFileOpenMode.write);
+      await remote.write(local.openRead().cast());
+      if (name.endsWith('.zip')) await widget.sshService.client.run("cd '$_currentPath' && unzip -o '$name'");
       _refreshFiles();
     }
-  } catch (e) {
-    _showSnackBar("Error upload: $e", isError: true);
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
+
   void _showFileActions(Map<String, dynamic> item) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text("Informació"),
-              onTap: () { Navigator.pop(context); _showDetails(item); },
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text("Reanomenar"),
-              onTap: () { Navigator.pop(context); _renameItem(item['name']); },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text("Esborrar"),
-              onTap: () { Navigator.pop(context); _deleteItem(item['name']); },
-            ),
-          ],
-        ),
-      ),
-    );
+    showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Wrap(children: [
+      ListTile(leading: const Icon(Icons.download), title: const Text("Descarregar"), onTap: () { Navigator.pop(ctx); _downloadFile(item['name']); }),
+      ListTile(leading: const Icon(Icons.delete, color: Colors.red), title: const Text("Esborrar"), onTap: () { Navigator.pop(ctx); _deleteItem(item['name']); }),
+    ])));
   }
 
   Future<void> _deleteItem(String name) async {
-    await widget.sshService.client.run("rm -rf '$_currentPath/$name'");
+    await widget.sshService.client.run("rm -rf '${linuxPath.join(_currentPath, name)}'");
     _refreshFiles();
-    _showSnackBar("Eliminat: $name");
   }
 
-  Future<void> _renameItem(String oldName) async {
-    TextEditingController c = TextEditingController(text: oldName);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Nou nom"),
-        content: TextField(controller: c),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancela")),
-          TextButton(onPressed: () async {
-            await widget.sshService.client.run("mv '$_currentPath/$oldName' '$_currentPath/${c.text}'");
-            Navigator.pop(context);
-            _refreshFiles();
-          }, child: const Text("Ok")),
-        ],
-      ),
-    );
-  }
-
-  void _showDetails(Map<String, dynamic> item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(item['name']),
-        content: Text("Mida: ${item['size']} B\nPermisos: ${item['permissions']}\nPropietari: ${item['owner']}"),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Tancar"))],
-      ),
-    );
-  }
-
-  // --- CONTROL SERVIDOR ---
-  Future<void> _handleServerAction(String action) async {
-    String cmd = "";
-    if (_serverType == ServerType.nodejs) {
-      cmd = action == 'start' ? "cd '$_currentPath' && npm start &" : "pkill -f node";
-    } else if (_serverType == ServerType.java) {
-      cmd = action == 'start' ? "cd '$_currentPath' && java -jar *.jar &" : "pkill -f java";
-    }
-    await widget.sshService.client.run(cmd);
-    _showSnackBar("Acció $action enviada");
-  }
-
-  void _showSnackBar(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: isError ? Colors.red : Colors.green),
-    );
+  void _showSnackBar(String m, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: isError ? Colors.red : Colors.green));
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _currentPath == widget.initialPath,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _navigateTo("..");
-      },
+      onPopInvokedWithResult: (didPop, res) { if (!didPop) _navigateTo(".."); },
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              if (_currentPath == widget.initialPath) Navigator.pop(context);
-              else _navigateTo("..");
-            },
-          ),
+          leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => _currentPath == widget.initialPath ? Navigator.pop(context) : _navigateTo("..")),
           title: Text(_currentPath, style: const TextStyle(fontSize: 10, fontFamily: 'monospace')),
-          actions: [
-            IconButton(icon: const Icon(Icons.pie_chart_outline), onPressed: _mostrarBaobab),
-            IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles),
-          ],
+          actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshFiles)],
         ),
-        body: Column(
-          children: [
-            if (_serverType != ServerType.generic)
-              Card(
-                margin: const EdgeInsets.all(10),
-                color: Colors.orange.shade50,
-                child: ListTile(
-                  leading: const Icon(Icons.dns, color: Colors.orange),
-                  title: Text("Projecte ${_serverType.name.toUpperCase()}"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(onPressed: () => _handleServerAction('start'), style: ElevatedButton.styleFrom(backgroundColor: Colors.green), child: const Text("START")),
-                      const SizedBox(width: 5),
-                      ElevatedButton(onPressed: () => _handleServerAction('stop'), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text("STOP")),
-                    ],
+        body: Column(children: [
+          if (_serverType != ServerType.generic)
+            Card(
+              margin: const EdgeInsets.all(10),
+              elevation: 4,
+              child: Column(children: [
+                ListTile(
+                  leading: StatusCanvasIndicator(isOnline: _isServerRunning),
+                  title: Text("Projecte ${_serverType == ServerType.nodejs ? 'NODEJS' : 'JAVA'}"),
+                  subtitle: Text(_isServerRunning ? "ESTAT: EN FUNCIONAMENT" : "ESTAT: ATURAT"),
+                  trailing: ElevatedButton(
+                    onPressed: () => _handleServerAction(_isServerRunning ? 'stop' : 'start'),
+                    style: ElevatedButton.styleFrom(backgroundColor: _isServerRunning ? Colors.red : Colors.green),
+                    child: Text(_isServerRunning ? "STOP" : "START"),
                   ),
                 ),
-              ),
-            Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    itemCount: _items.length,
-                    itemBuilder: (context, i) {
-                      final item = _items[i];
-                      return ListTile(
-                        leading: Icon(item['isDirectory'] ? Icons.folder : Icons.description, 
-                                      color: item['isDirectory'] ? Colors.amber : Colors.grey),
-                        title: Text(item['name']),
-                        subtitle: Text("${item['permissions']} | ${item['size']} B"),
-                        onTap: () => item['isDirectory'] ? _navigateTo(item['name']) : _showFileActions(item),
-                        onLongPress: () => _showFileActions(item),
-                      );
-                    },
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    const Text("Redirecció Port 80 -> Local", style: TextStyle(fontSize: 12)),
+                    Switch(value: _isPortForwarded, onChanged: _isServerRunning ? _togglePortForwarding : null)
+                  ]),
+                )
+              ]),
             ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _uploadFile,
-          child: const Icon(Icons.upload_file),
-        ),
+          Expanded(
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator()) 
+              : ListView.builder(
+                  itemCount: _items.length,
+                  itemBuilder: (context, i) => ListTile(
+                    leading: Icon(_items[i]['isDirectory'] ? Icons.folder : Icons.description, color: _items[i]['isDirectory'] ? Colors.amber : Colors.grey),
+                    title: Text(_items[i]['name']),
+                    onTap: () => _items[i]['isDirectory'] ? _navigateTo(_items[i]['name']) : _showFileActions(_items[i]),
+                  ),
+                ),
+          )
+        ]),
+        floatingActionButton: FloatingActionButton(onPressed: _uploadFile, child: const Icon(Icons.upload_file)),
       ),
     );
   }
-}
-
-// --- PINTORES ---
-List<Color> _getColors() => [Colors.blue, Colors.green, Colors.orange, Colors.red, Colors.purple, Colors.cyan];
-
-class DiskUsagePainter extends CustomPainter {
-  final Map<String, int> folderSizes;
-  DiskUsagePainter(this.folderSizes);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (folderSizes.isEmpty) return;
-    double total = folderSizes.values.fold(0, (s, i) => s + i);
-    Offset center = Offset(size.width / 2, size.height / 2);
-    double radius = min(size.width, size.height) / 2;
-    double startAngle = -pi / 2;
-
-    int i = 0;
-    folderSizes.forEach((name, bytes) {
-      double sweep = (bytes / total) * 2 * pi;
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, sweep, true, 
-                     Paint()..color = _getColors()[i % _getColors().length]);
-      startAngle += sweep;
-      i++;
-    });
-    canvas.drawCircle(center, radius * 0.4, Paint()..color = Colors.white);
-  }
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
