@@ -1,12 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:dartssh2/dartssh2.dart';
-import 'package:exercici05a/widgets/StatusCanvasIndicator.dart';
+
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:archive/archive_io.dart';
-import 'package:exercici05a/models/models.dart' hide ServerStatus;
 import 'package:exercici05a/models/serverStatus.dart';
 
 class ServerStatusWidget extends StatelessWidget {
