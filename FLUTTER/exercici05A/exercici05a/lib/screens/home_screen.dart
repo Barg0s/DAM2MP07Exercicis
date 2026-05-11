@@ -131,18 +131,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_formKey.currentState!.validate()) {
       final path = await arxius.getDefaultDirectoryPath();
       final storage = StorageService(path);
-      
+
       final newServer = ServerModel(
         name: _nameController.text,
         host: _serverController.text.trim(),
         port: int.parse(_portController.text),
-        username: _nameController.text, // Usando el nombre como usuario por defecto
+        username: _userController.text.trim(), // ✔ CORRECTO
         keyPath: _keyController.text,
       );
 
       _favorites.add(newServer);
       await storage.saveServers(_favorites);
-      _loadFavorites(); // Recargar lista
+
+      await _loadFavorites();
+
       _showError("Servidor guardat!", color: Colors.green);
     }
   }
@@ -246,13 +248,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: ListTile(
                               leading: const Icon(Icons.dns, color: Colors.blue),
                               title: Text(s.name),
-                              subtitle: Text("${s.host}:${s.port}"),
+                              subtitle: Text("${s.host}:${s.port}"), // 👈 AQUÍ
                               onTap: () {
                                 setState(() {
                                   _nameController.text = s.name;
                                   _serverController.text = s.host;
                                   _portController.text = s.port.toString();
                                   _keyController.text = s.keyPath;
+                                  _userController.text = s.username;
                                 });
                               },
                             ),
