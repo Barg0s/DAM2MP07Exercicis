@@ -34,7 +34,10 @@ class Arxius {
 
       if (kDebugMode) print("✔ Encriptado con RSA directo");
     } catch (e) {
-      if (kDebugMode) print("❌ Error: RSA directo tiene un límite de caracteres muy pequeño. $e");
+      if (kDebugMode)
+        print(
+          "❌ Error: RSA directo tiene un límite de caracteres muy pequeño. $e",
+        );
     }
   }
 
@@ -48,7 +51,8 @@ class Arxius {
     try {
       final privateKeyPem = await File(clauPrivadaPath).readAsString();
       final parser = enc.RSAKeyParser();
-      final RSAPrivateKey privateKey = parser.parse(privateKeyPem) as RSAPrivateKey;
+      final RSAPrivateKey privateKey =
+          parser.parse(privateKeyPem) as RSAPrivateKey;
 
       final rsa = PKCS1Encoding(RSAEngine())
         ..init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
@@ -64,14 +68,20 @@ class Arxius {
       final encryptedData = enc.Encrypted(encryptedBytes);
 
       final encrypter = enc.Encrypter(enc.AES(aesKey, mode: enc.AESMode.gcm));
-      
+
       final decryptedBytes = encrypter.decryptBytes(encryptedData, iv: iv);
 
-      await File(outputPath).writeAsBytes(decryptedBytes);
+      final finalOutputPath = outputPath.isEmpty
+          ? '${File(arxiuEncPath).parent.path}/${File(arxiuEncPath).uri.pathSegments.last.replaceAll('.enc', '')}'
+          : outputPath;
 
-      if (kDebugMode) print("✔ Desencriptado correctamente en: $outputPath");
+      await File(finalOutputPath).writeAsBytes(decryptedBytes);
+
+      if (kDebugMode) {
+        print("✔ Desencriptat correctament en: $finalOutputPath");
+      }
     } catch (e) {
-      if (kDebugMode) print("❌ Error decrypt: $e");
+      if (kDebugMode) print("Error decrypt: $e");
     }
   }
 }
