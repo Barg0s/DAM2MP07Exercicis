@@ -75,4 +75,10 @@ class ServerControlService {
       await ssh.client.run("nohup socat TCP-LISTEN:80,fork TCP:localhost:$targetPort > /dev/null 2>&1 &");
     }
   }
+
+  // Visualitzar logs
+  Future<String> getServerLog(String path) async {
+    final result = await ssh.client.run("cd '$path' && tail -n 100 app.log 2>/dev/null || echo 'No app.log'");
+    return utf8.decode(result);
+  }
 }
