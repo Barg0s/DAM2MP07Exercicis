@@ -6,42 +6,74 @@ import 'package:exercici05a/widgets/StatusCanvasIndicator.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive_io.dart';
-import 'package:exercici05a/models/models.dart';
+import 'package:exercici05a/models/models.dart' hide ServerStatus;
+import 'package:exercici05a/models/serverStatus.dart';
 
 class ServerStatusWidget extends StatelessWidget {
-  final String status; // 'funcionant', 'aturat', 'reiniciant', 'error'
+  final ServerStatus status;
 
-  const ServerStatusWidget({super.key, required this.status});
+  const ServerStatusWidget({
+    super.key,
+    required this.status,
+  });
 
-  Color _getStatusColor() {
+  Color _getColor() {
     switch (status) {
-      case 'funcionant': return Colors.green;
-      case 'aturat': return Colors.orange;
-      case 'reiniciant': return Colors.blue;
-      case 'error': return Colors.red;
-      default: return Colors.grey;
+      case ServerStatus.running:
+        return Colors.green;
+
+      case ServerStatus.stopped:
+        return Colors.grey;
+
+      case ServerStatus.restarting:
+        return Colors.orange;
+
+      case ServerStatus.error:
+        return Colors.red;
+    }
+  }
+
+  String _getText() {
+    switch (status) {
+      case ServerStatus.running:
+        return "En funcionament";
+
+      case ServerStatus.stopped:
+        return "Aturat";
+
+      case ServerStatus.restarting:
+        return "Reiniciant";
+
+      case ServerStatus.error:
+        return "Error";
+    }
+  }
+
+  IconData _getIcon() {
+    switch (status) {
+      case ServerStatus.running:
+        return Icons.check_circle;
+
+      case ServerStatus.stopped:
+        return Icons.stop_circle;
+
+      case ServerStatus.restarting:
+        return Icons.restart_alt;
+
+      case ServerStatus.error:
+        return Icons.error;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _getStatusColor().withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _getStatusColor()),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          StatusCanvasIndicator(isOnline: status == 'funcionant', size: 10),
-          const SizedBox(width: 8),
-          Text(
-            status.toUpperCase(),
-            style: TextStyle(color: _getStatusColor(), fontWeight: FontWeight.bold, fontSize: 12),
-          ),
-        ],
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          _getIcon(),
+          color: _getColor(),
+        ),
+        title: Text(_getText()),
       ),
     );
   }
