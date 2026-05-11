@@ -10,42 +10,15 @@ import 'package:path_provider/path_provider.dart';
 
 import '../services/sshService.dart';
 import '../services/fileService.dart';
+import '../services/ServerControlService.dart';
 import '../models/serverModel.dart';
 import '../models/fileModel.dart';
 import '../widgets/diskUsagePainter.dart';
 
-// ================== 1. WIDGET CERCLE VERD/VERMELL (CUSTOM PAINTER) ==================
-class StatusCircle extends StatelessWidget {
-  final bool isActive;
-  const StatusCircle({super.key, required this.isActive});
+import '../widgets/StatusCircle.dart';
+import '../widgets/ServerStatusWidget.dart';
 
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _CirclePainter(isActive),
-      size: const Size(24, 24),
-    );
-  }
-}
 
-class _CirclePainter extends CustomPainter {
-  final bool isActive;
-  _CirclePainter(this.isActive);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = isActive ? Colors.green : Colors.red
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), size.width / 2, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-// ================== 2. ENUM PER A L'ESTAT DEL SERVIDOR ==================
-enum ServerStatus { running, stopped, restarting, error }
 
 // ================== CLASSE PRINCIPAL ==================
 class FileManagerScreen extends StatefulWidget {
@@ -64,6 +37,7 @@ class FileManagerScreen extends StatefulWidget {
 
 class _FileManagerScreenState extends State<FileManagerScreen> {
   late FileService _fileService;
+  late ServerControlService _serverControlService;
   late String _currentPath;
   List<Map<String, dynamic>> _items = [];
   bool _isLoading = true;
@@ -81,6 +55,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   void initState() {
     super.initState();
     _fileService = FileService(widget.sshService);
+    _serverControlService = ServerControlService(widget.sshService);
     _currentPath = widget.initialPath;
     _refreshFiles();
     _updateServerStatus();
@@ -100,7 +75,6 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     });
   }
 
-  // ==================== MÉTODOS AUXILIARES ====================
   Future<String> runCommand(String command) async {
     final result = await widget.sshService.client.run(command);
     return utf8.decode(result);
@@ -108,19 +82,13 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
 
   Future<bool> _isPortOpenRemote(int port) async {
     try {
-      final result = await widget.sshService.client.run(
-        "ss -ltn 2>/dev/null | grep :$port || true"
-      );
-      final output = utf8.decode(result).trim();
-      print("Port $port check: '$output'");
-      return output.contains(":$port");
+      final status = await _serverControlService.checkStatus(_currentPath, port);
+      return status == ServerStatus.running;
     } catch (e) {
       print("Error checking port $port: $e");
       return false;
     }
   }
-
-  // ==================== CONTROL DEL SERVIDOR (TODO CORREGIDO) ====================
   Future<void> _handleServerAction(String action) async {
     setState(() => _currentServerStatus = ServerStatus.restarting);
     
@@ -153,31 +121,23 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       return;
     }
     
-    String command;
-    if (_serverType == ServerType.nodejs) {
-      command = 'cd "$_currentPath" && nohup npm start > app.log 2>&1 &';
-    } else {
-      command = 'cd "$_currentPath" && nohup java -jar *.jar > app.log 2>&1 &';
-    }
-    
-    final result = await runCommand(command);
-    print("Start result: $result");
+    await _serverControlService.startServer(_currentPath, _serverType, port);
     
     await _waitForServer(port: port);
-    _showSnackBar("✅ Servidor arrancado en puerto $port");
+    _showSnackBar("Servidor arrancado en puerto $port");
   }
 
   Future<void> _stopServer() async {
     final port = _serverPort ?? (_serverType == ServerType.nodejs ? 3000 : 8080);
     
-    await runCommand('pkill -f ":$port" || pkill -f "node.*$_currentPath" || pkill -f "java.*$_currentPath" || true');
+    await _serverControlService.stopServer(_currentPath, port);
     await Future.delayed(const Duration(seconds: 2));
     
     if (!(await _isPortOpenRemote(port))) {
-      _showSnackBar("✅ Servidor parado");
+      _showSnackBar("Servidor parado");
       setState(() => _currentServerStatus = ServerStatus.stopped);
     } else {
-      _showSnackBar("⚠️ Algunos procesos siguen corriendo", isError: true);
+      _showSnackBar("Algunos procesos siguen corriendo", isError: true);
     }
   }
 
@@ -191,7 +151,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _showSnackBar("Esperant servidor... (port $port)");
     for (int i = 0; i < maxRetries; i++) {
       if (await _isPortOpenRemote(port)) {
-        _showSnackBar("✅ Servidor actiu!");
+        _showSnackBar(" Servidor actiu!");
         return;
       }
       await Future.delayed(const Duration(seconds: 1));
@@ -202,10 +162,12 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   // ==================== MÉTODOS DE LA UI ====================
   Future<void> _updateServerStatus() async {
     if (_serverType == ServerType.generic) {
-      setState(() {
-        _currentServerStatus = ServerStatus.stopped;
-        _isServerReachable = false;
-      });
+      if (mounted) {
+        setState(() {
+          _currentServerStatus = ServerStatus.stopped;
+          _isServerReachable = false;
+        });
+      }
       return;
     }
     
@@ -213,16 +175,20 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
     _serverPort = port;
     
     try {
-      final open = await _isPortOpenRemote(port);
-      setState(() {
-        _currentServerStatus = open ? ServerStatus.running : ServerStatus.stopped;
-        _isServerReachable = open;
-      });
+      final status = await _serverControlService.checkStatus(_currentPath, port);
+      if (mounted) {
+        setState(() {
+          _currentServerStatus = status;
+          _isServerReachable = status == ServerStatus.running;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _currentServerStatus = ServerStatus.error;
-        _isServerReachable = false;
-      });
+      if (mounted) {
+        setState(() {
+          _currentServerStatus = ServerStatus.error;
+          _isServerReachable = false;
+        });
+      }
     }
   }
 
@@ -266,12 +232,17 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       _showSnackBar("Indica un port destí", isError: true);
       return;
     }
+    final targetPort = int.tryParse(target);
+    if (targetPort == null) {
+      _showSnackBar("Port no vàlid", isError: true);
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await runCommand("pkill -f 'socat TCP-LISTEN:80'");
-      await runCommand("nohup socat TCP-LISTEN:80,fork TCP:localhost:$target > /dev/null 2>&1 &");
+      await _serverControlService.togglePort80Redirect(targetPort, true);
       setState(() => _isPort80RedirectActive = true);
-      _showSnackBar("✅ Redirecció 80 → $target activada");
+      _showSnackBar(" Redirecció 80 → $target activada");
     } catch (e) {
       _showSnackBar("Error activant redirecció: $e", isError: true);
     } finally {
@@ -282,7 +253,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   Future<void> _removePort80Redirect() async {
     setState(() => _isLoading = true);
     try {
-      await runCommand("pkill -f 'socat TCP-LISTEN:80'");
+      await _serverControlService.togglePort80Redirect(0, false);
       setState(() => _isPort80RedirectActive = false);
       _showSnackBar("❌ Redirecció 80 desactivada");
     } catch (e) {
@@ -295,8 +266,8 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
   // ==================== VISUALITZAR LOGS ====================
   Future<void> _viewServerLog() async {
     try {
-      final result = await runCommand("cd '$_currentPath' && tail -n 100 app.log 2>/dev/null || echo 'No app.log'");
-      final log = utf8.decode(result as List<int>);
+      // Nota: runCommand ja fa el decode de utf8, no cal fer-lo de nou
+      final log = await runCommand("cd '$_currentPath' && tail -n 100 app.log 2>/dev/null || echo 'No app.log'");
 
       showDialog(
         context: context,
@@ -319,8 +290,6 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
       _showSnackBar("Error llegint log: $e", isError: true);
     }
   }
-
-  // ==================== GESTIÓ D'ARXIUS (EXISTENTS) ====================
   Future<void> _refreshFiles() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -679,7 +648,7 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
                       child: TextField(
                         controller: _targetPortController,
                         decoration: const InputDecoration(
-                          labelText: "Port destí (ex: 8080)",
+                          labelText: "Port destí",
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
