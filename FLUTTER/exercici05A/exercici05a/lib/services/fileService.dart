@@ -13,7 +13,6 @@ class FileService {
   final SSHService ssh;
   FileService(this.ssh);
 
-  // Llistar arxius amb detalls de permisos
   Future<String> list(String path) async {
     final result = await ssh.client.run('ls -ll "$path"');
     return String.fromCharCodes(result);
